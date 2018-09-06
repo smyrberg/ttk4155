@@ -1,10 +1,4 @@
-
-#define F_CPU 4915200
-#define FOSC 4915200// Clock Speed
-#define BAUD 9600
-#define MYUBRR FOSC/16/BAUD-1
-
-#include "../../drivers/uart.h"
+#include "uart.h"
 #include <util/delay.h>
 #include <stdio.h>
 
@@ -12,9 +6,9 @@
 int main( void){
 	unsigned char msg = 'x';
 	
-	UART_Init (MYUBRR);
+	UART_Init (UBRR);
 
-    printf("\rhello motherfuckers\n");
+    printf("\rhello motherfuckers\r\n");
 	
 	while(1){
         
@@ -25,8 +19,8 @@ int main( void){
 
         UART_Transmit(msg);
 
-        UART_Transmit('\n');
-		UART_Transmit('\r');
+        UART_Transmit('\r');
+		UART_Transmit('\n');
 
 
         msg = UART_Recieve();
