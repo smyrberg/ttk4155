@@ -6,7 +6,7 @@
 int main( void){
 	unsigned char msg = 'x';
 	
-	UART_Init (UBRR);
+	UART_Init(UBRR);
 
     printf("\rhello motherfuckers\r\n");
 	

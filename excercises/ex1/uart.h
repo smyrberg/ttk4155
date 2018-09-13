@@ -7,8 +7,8 @@
 #define BAUD 9600
 #define UBRR FOSC/16/BAUD-1
 
-void UART_Init( unsigned int ubrr );
-void UART_Transmit (unsigned char data);
-unsigned char UART_Recieve (void);
+void UART_Init(unsigned int ubrr );
+void UART_Transmit(unsigned char data);
+unsigned char UART_Recieve(void);
 
 #endif

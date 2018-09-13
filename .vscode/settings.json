@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "io.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "delay.h": "c"
     }
 }
