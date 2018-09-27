@@ -37,5 +37,7 @@ begin
 	adc_cs <= NOT((NOT a11) AND a10);
     -- OLED, active low
 	oled_cs <= NOT((NOT a11) AND (NOT a10));
+    -- OLED data/!command
+	oled_dc <= a9;
 
 end behavioral;
