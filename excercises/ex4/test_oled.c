@@ -11,15 +11,11 @@ void main(){
 	ADC_init();
 	OLED_init();
 
-    while(1){
+    OLED_print_arrow();
+    OLED_print_arrow();
 
-        OLED_print_arrow();
-        _delay_ms(1000);
+    OLED_goto_row(1);
+    OLED_print_arrow();
         
-        for(int i = 0; i < 127*9; i++){
-    		OLED_write_data(0x0);
-    	}
-    }
-
 
 }

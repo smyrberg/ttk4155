@@ -8,7 +8,7 @@ void OLED_init( void );
 void OLED_write_command( uint8_t command );
 void OLED_write_data( uint8_t data );
 void OLED_goto_column( uint8_t column );
-void OLED_goto_line( uint8_t line );
+void OLED_goto_row( uint8_t line );
 void OLED_pos(uint8_t row, uint8_t column);
 void OLED_home();
 void OLED_clear_line( uint8_t line );

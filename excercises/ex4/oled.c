@@ -47,50 +47,47 @@ uint8_t page, col;
 void OLED_init( void )
 {
 
-	*oled_cmd = 0xAE;	
-	//Segment remap
-	*oled_cmd = 0xA1;
+	*oled_cmd = 0xAE;	// display off
+	*oled_cmd = 0xA1;	// segment remap
+	
 	//Common pads hardware: alternative
 	*oled_cmd = 0xDA;
 	*oled_cmd = 0x12;
-	//Common output scan direction:com63~com0
-	*oled_cmd = 0xC8;
+	
+	*oled_cmd = 0xC8;	//Common output scan direction:com63~com0
+	
 	//Multiplex ration mode:63
 	*oled_cmd = 0xA8;
 	*oled_cmd = 0x3F;
+
 	//Display divide ratio/osc. freq. mode
-	
 	*oled_cmd = 0xD5;
 	*oled_cmd = 0x80;
+
 	//Contrast control
 	*oled_cmd = 0x81;
 	*oled_cmd = 0x50;
+
 	//Set pre-charge period
 	*oled_cmd = 0xD9;
 	*oled_cmd = 0x21;
+
 	//Set Memory Addressing Mode
 	*oled_cmd = 0x20;
-	*oled_cmd = 0x00;
+	*oled_cmd = 0x00;	// horizontal addresssing mode
+
 	//VCOM deselect level mode
 	*oled_cmd = 0xDB;
 	*oled_cmd = 0x30;
+
 	//Master configuration
 	*oled_cmd = 0xAD;
 	*oled_cmd = 0x00;
-	//Out follows RAM content
-	*oled_cmd = 0xA4;
-	//Set normal display
-	*oled_cmd = 0xA6;
-	//Display on
-	*oled_cmd = 0xAF;	
-	//Set page start address
-	*oled_cmd = 0xB0;
-	//Set lower column start address
-	*oled_cmd = 0x00;
-	//Set higher column start address
-	*oled_cmd = 0x10;	
 
-	
+	*oled_cmd = 0xA4;	//Out follows RAM content
+	*oled_cmd = 0xA6;	//Set normal display
+	*oled_cmd = 0xAF;	//Display on
+
 	// clear screen
 	for(int i = 0; i < 128*8; i++){
 		OLED_write_data(0x0);
@@ -129,7 +126,7 @@ void OLED_pos(uint8_t row, uint8_t column)
 
 void OLED_home()
 {
-	page = 4;
+	page = 0;
 	col = 0;
 	
 	*oled_cmd = 0x22;
