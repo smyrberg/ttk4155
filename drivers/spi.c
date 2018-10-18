@@ -3,6 +3,8 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
+#include "uart.h"
+
 /* setup.h stuff
 #define F_CPU 4915200
 #define FOSC 4915200	// Clock Speed
@@ -12,11 +14,19 @@
 
 void SPI_init()
 {
-	// Enable SPI, Master, set clock rate
-	SPCR = (1 << SPE)|(1 << MSTR)|(1 << SPR0);
-	
 	// Set MOSI, SCK and SS output
-	DDRB = (1 << DDB5)|(1 << DDB7)|(1 << DDB4);
+	#if defined(__AVR_ATmega162__)
+	printf("init atmega162 spi\r\n");
+	DDRB |= (1 << DDB5)|(1 << DDB7)|(1 << DDB4);
+	#endif
+	#if defined(__AVR_ATmega2560__)
+	printf("init atmega2560 spi\r\n");
+	DDRB |= (1 << DDB2)|(1 << DDB1)|(1 << DDB0) | (1 << DDB7);
+	#endif
+	
+	// Enable SPI, Master, set clock rate
+	SPCR = (1 << MSTR)|(1 << SPR0);
+	SPCR |= (1 << SPE);
 }
 
 
@@ -33,10 +43,21 @@ uint8_t SPI_transmit_receive(uint8_t data)
 // Set _SS to 1 or 0
 void SPI_set_ss(int val)
 {
+	#if defined(__AVR_ATmega162__)
 	if (val == 1){
 		set_bit(PORTB, PB4);
 	}
 	else if (val == 0){
 		clear_bit(PORTB, PB4);
 	}
+	#endif
+
+	#if defined(__AVR_ATmega2560__)
+	if (val == 1){
+		set_bit(PORTB, PB7);
+	}
+	else if (val == 0){
+		clear_bit(PORTB, PB7);
+	}
+	#endif
 }

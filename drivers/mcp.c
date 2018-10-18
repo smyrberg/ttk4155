@@ -4,9 +4,14 @@ void MCP_init(int in_loopback)
 {
 	// SPI_init();
 	MCP_reset();
-
-	MCP_modify_bit(MCP_RXB0CTRL, 0x60, 0xFF); // Turns masks/filters off for RX0
-	MCP_modify_bit(MCP_RXB1CTRL, 0x60, 0xFF); // Turns masks/filters off for RX1
+	
+	// turn mask/filters off (receive any message) and also enable rollover
+	// 0x64 = 0b01100100
+	MCP_modify_bit(MCP_RXB0CTRL, 0x64, 0x64);
+	MCP_modify_bit(MCP_RXB1CTRL, 0x64, 0x64);
+	
+	
+	// set mode for controller
 	if(in_loopback){
 		printf("MCP in loopback mode\r\n");
 		MCP_set_mode(MODE_LOOPBACK); // Sets loopback operation mode for testing

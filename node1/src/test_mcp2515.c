@@ -26,7 +26,7 @@ void main(){
         printf("\n\niteration: %d\r\n", i);
         CAN_message_send(&send);
         _delay_ms(1);
-        // receive = CAN_message_receive();
+         receive = CAN_message_receive();
         // printf("tx data: 0x%02x \t rx data: 0x%02x \r\n", send.data[0], receive.data[0]);
 		// printf("tx id:   0x%02x \t rx id:   0x%02x \r\n", send.id, receive.id);
 		// printf("tx len:  0x%02x \t rx len:  0x%02x \r\n", send.length, receive.length);
