@@ -4,7 +4,8 @@
 #include <stdio.h>
 
 
-void UART_Init( unsigned int ubrr )
+
+void UART_Init(unsigned int ubrr)
 {
 	// Set baud rate
 	UBRR0H |= (unsigned char)(ubrr>>8);
@@ -21,6 +22,7 @@ void UART_Init( unsigned int ubrr )
 	#endif
 
 	fdevopen(&UART_Transmit, &UART_Recieve);
+	printf("ubrr: %d, UBRR: %d\r\n", ubrr, UBRR);
 }
 
 void UART_Transmit (unsigned char data)

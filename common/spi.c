@@ -1,9 +1,10 @@
+#include "uart.h"
 #include "spi.h"
 #include "bitmanip.h"
 #include <avr/io.h>
 #include <util/delay.h>
 
-#include "uart.h"
+
 
 /* setup.h stuff
 #define F_CPU 4915200

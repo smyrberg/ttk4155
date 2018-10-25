@@ -134,7 +134,8 @@ void CAN_handle_interrupt(can_message_t *msg)
 }
 
 
-// register interrupt handlers for incomming CAN messsages
+
+// register interrupt handlers for incoming CAN messages
 #if defined(__AVR_ATmega162__)
 ISR(INT0_vect){
 	uint8_t interrupt = MCP_read(MCP_CANINTF);

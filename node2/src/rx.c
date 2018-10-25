@@ -1,7 +1,9 @@
-#include "../../drivers/uart.h"
-#include "../../drivers/spi.h"
-#include "../../drivers/MCP2515.h"
-#include "../../drivers/can.h"
+#if 0
+
+#include "../../common/uart.h"
+#include "../../common/spi.h"
+#include "../../common/MCP2515.h"
+#include "../../common/can.h"
 
 #define F_CPU 16000000L
 #define FOSC 16000000	// Clock Speed
@@ -11,6 +13,8 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
+
+
 
 
 int main( void ){
@@ -59,3 +63,4 @@ int main( void ){
 	
 	return 0;
 }
+#endif

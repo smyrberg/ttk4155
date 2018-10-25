@@ -4,6 +4,11 @@
 #include "MCP2515.h"
 #include "mcp.h"
 
+
+// message id
+#define CAN_MSG_SERVO_CMD 1 // range 0-100
+
+
 typedef struct {
 	unsigned int id;
 	uint8_t length;

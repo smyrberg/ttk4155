@@ -1,3 +1,7 @@
+#if 0
+
+
+
 #include "../../drivers/uart.h"
 #include "../../drivers/spi.h"
 #include "../../drivers/MCP2515.h"
@@ -54,3 +58,4 @@ int main( void ){
 
 	return 0;
 }
+#endif
