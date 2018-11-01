@@ -4,6 +4,7 @@
 #include "drivers/pwm.h"
 #include "drivers/ir.h"
 #include "drivers/adc.h"
+#include "drivers/motor.h"
 
 #include "../../common/uart.h"
 #include "../../common/spi.h"
@@ -19,8 +20,18 @@ int main()
 	SPI_init();
 	CAN_init(0);
 	PWM_init();
-	ADC_init();
+	IR_init();
+	MOTOR_init();
 	sei();
+	
+	MOTOR_find_limits();
+	for (;;){
+		// IR_read();
+		//MOTOR_set_velocity(0x80);
+		_delay_ms(20);
+		printf("ENCODER: %d\r\n", MOTOR_read_scaled_encoder());
+		
+	}
 	
 	can_message_t msg;
 	int i = 0;
@@ -30,8 +41,11 @@ int main()
 			SERVO_set_pos(msg.data[0]);
 		}
 		
-		int ir_val = IR_read();
-		printf("IR value: %d\n\r", ir_val);
+		if (IR_beam_broken()){
+			printf("IR beam is broken\r\n");
+		} else {
+			printf("IR beam is NOT broken\r\n");
+		}
 		
 		_delay_ms(1000);
 	}

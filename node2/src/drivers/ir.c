@@ -1,19 +1,33 @@
 #include "ir.h"
 #include "adc.h"
+#include <stdlib.h>
 
-uint8_t IR_read()
+#define READINGS 4
+uint8_t baseline;
+
+
+uint16_t IR_read()
 {
-	static uint8_t values[4];
-	int avg = 0;
+	int total = 0;
 	
-
-	values[0] = ADC_read();
-	for (int i = 3; i >= 0; i--){
-		avg = avg + values[i];
-		if (i != 0){
-			values[i] = values[i - 1];
-		}
+	// do multiple readings
+	for (int i = 0; i < READINGS; i++)
+	{		
+		total += ADC_read();	
 	}
-	avg = avg / 4;
-	return avg;
+
+	return (uint16_t) total/READINGS;
+}
+
+void IR_init()
+{
+	// assumes that line is not broken at initalization
+	ADC_init();
+	baseline = ADC_read();
+}
+
+uint8_t IR_beam_broken()
+{
+	uint8_t diff = abs(baseline - ADC_read());
+	return diff > 2;
 }

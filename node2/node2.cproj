@@ -162,6 +162,30 @@
     <Compile Include="src\drivers\adc.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\drivers\motor.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\drivers\motor.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\drivers\solenoid.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\drivers\solenoid.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\drivers\twi_handler.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\drivers\twi_handler.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\drivers\TWI_Master.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\drivers\TWI_Master.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\drivers\ir.c">
       <SubType>compile</SubType>
     </Compile>
