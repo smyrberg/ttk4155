@@ -1,10 +1,11 @@
 #include "solenoid.h"
-//#include "../setup.h"
+#include "common/uart.h"
 
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
 int solenoid_timer_flag = 0;
+uint8_t g_can_shoot = 1;
 
 void SOLENOID_init( void )
 {
@@ -13,15 +14,17 @@ void SOLENOID_init( void )
 	PORTF |= (1 << PF1);
 	
 	SOLENOID_timer_init();
+	
 }
 
-void SOLENOID_pulse(uint8_t shoot)
+void SOLENOID_shoot()
 {
 	// This function should only be called if shoot has changed from 0 to 1
 	// (message received from 162 only when this happens)
-	if (shoot){
+	if (g_can_shoot){
 		//set pin to 0
 		PORTF &= ~(1 << PF1);
+		g_can_shoot = 0;
 	}
 }
 
@@ -40,6 +43,7 @@ void SOLENOID_timer_init( void )
 }
 
 ISR(TIMER4_COMPA_vect)
-{
+{	
 	PORTF |= (1 << PF1);
+	g_can_shoot = 1;
 }

@@ -60,7 +60,6 @@ void CAN_message_send(can_message_t* msg){
 		txreq = (status & 4);
 
 	} while(txreq);
-	printf("tx cleared\r\n");
 
 	/* Set message ID, standard mode*/
 	MCP_write(MCP_TXB0CTRL + 1, 0); // High level identifier
@@ -133,6 +132,26 @@ void CAN_handle_interrupt(can_message_t *msg)
 	}
 }
 
+void default_receive_handler(can_message_t *msg)
+{
+	// discard no-message
+	if (msg->id == CAN_NO_MESSAGE) { return; }
+
+	printf("[CAN] .id: %d, length: %d data: [ ", msg->id, msg->length);
+	for (int i = 0; i < msg->length; i++)
+	{
+		printf("%03d ", msg->data[i]);
+	}
+	printf("]\r\n");
+}
+
+
+CAN_msg_handler_t receive_handler = default_receive_handler;
+void CAN_set_receive_handler(CAN_msg_handler_t handler)
+{
+	receive_handler = handler;	
+}
+
 
 
 // register interrupt handlers for incoming CAN messages
@@ -150,6 +169,10 @@ ISR(INT0_vect){
 		// clear CANINTF.RX1IF
 		MCP_modify_bit(MCP_CANINTF, 0x02, 0x00);
 	}
+
+	can_message_t msg;
+	CAN_handle_interrupt(&msg);
+	receive_handler(&msg);
 }
 #endif
 
@@ -167,5 +190,9 @@ ISR(INT3_vect){
 		// clear CANINTF.RX1IF
 		MCP_modify_bit(MCP_CANINTF, 0x02, 0x00);
 	}
+
+	can_message_t msg;
+	CAN_handle_interrupt(&msg);
+	receive_handler(&msg);
 }
 #endif

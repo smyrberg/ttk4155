@@ -1,33 +1,31 @@
 #include "ir.h"
-#include "adc.h"
-#include <stdlib.h>
-
-#define READINGS 4
-uint8_t baseline;
-
-
-uint16_t IR_read()
-{
-	int total = 0;
-	
-	// do multiple readings
-	for (int i = 0; i < READINGS; i++)
-	{		
-		total += ADC_read();	
-	}
-
-	return (uint16_t) total/READINGS;
-}
 
 void IR_init()
 {
-	// assumes that line is not broken at initalization
-	ADC_init();
-	baseline = ADC_read();
+	// Enable ADC and set prescaler to 128
+	ADCSRA |= (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
 }
+
+uint16_t ADC_read()
+{
+	// Reference selection: AVCC w/ external capacitor at AREF. Left adjust result
+	// Using ADC0 (A0 on shield) as input
+	ADMUX |= (1 << REFS0) | (1 << ADLAR);
+	
+	// Start conversion
+	ADCSRA |= (1 << ADSC);
+	
+	// Wait until conversion is complete
+	while(ADCSRA & (1 << ADSC));
+	
+	// read 12 bit into 16 bit return value
+	return (uint16_t)(ADC>>4);
+}
+
 
 uint8_t IR_beam_broken()
 {
-	uint8_t diff = abs(baseline - ADC_read());
-	return diff > 2;
+	return ADC_read() < 2000;
 }
+
+

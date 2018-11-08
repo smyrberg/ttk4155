@@ -14,6 +14,8 @@ void MOTOR_set_velocity(uint8_t vel);
 int16_t MOTOR_read_encoder( void );
 int MOTOR_read_scaled_encoder( void );
 
+void MOTOR_start_controller();
+void MOTOR_set_position(uint8_t reference_pos);
 
 
 #endif /* MOTOR_H_ */

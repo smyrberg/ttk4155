@@ -96,6 +96,12 @@
             <Value>DEBUG</Value>
           </ListValues>
         </avrgcc.compiler.symbols.DefSymbols>
+        <avrgcc.compiler.directories.IncludePaths>
+          <ListValues>
+            <Value>../../lib/common</Value>
+            <Value>../../lib</Value>
+          </ListValues>
+        </avrgcc.compiler.directories.IncludePaths>
         <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
         <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
         <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
@@ -116,51 +122,45 @@
     <Folder Include="src\common" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\common\bitmanip.h">
+    <Compile Include="..\lib\common\bitmanip.h">
       <SubType>compile</SubType>
       <Link>src\common\bitmanip.h</Link>
     </Compile>
-    <Compile Include="..\common\can.c">
+    <Compile Include="..\lib\common\can.c">
       <SubType>compile</SubType>
       <Link>src\common\can.c</Link>
     </Compile>
-    <Compile Include="..\common\can.h">
+    <Compile Include="..\lib\common\can.h">
       <SubType>compile</SubType>
       <Link>src\common\can.h</Link>
     </Compile>
-    <Compile Include="..\common\mcp.c">
+    <Compile Include="..\lib\common\mcp.c">
       <SubType>compile</SubType>
       <Link>src\common\mcp.c</Link>
     </Compile>
-    <Compile Include="..\common\mcp.h">
+    <Compile Include="..\lib\common\mcp.h">
       <SubType>compile</SubType>
       <Link>src\common\mcp.h</Link>
     </Compile>
-    <Compile Include="..\common\MCP2515.h">
+    <Compile Include="..\lib\common\MCP2515.h">
       <SubType>compile</SubType>
       <Link>src\common\MCP2515.h</Link>
     </Compile>
-    <Compile Include="..\common\spi.c">
+    <Compile Include="..\lib\common\spi.c">
       <SubType>compile</SubType>
       <Link>src\common\spi.c</Link>
     </Compile>
-    <Compile Include="..\common\spi.h">
+    <Compile Include="..\lib\common\spi.h">
       <SubType>compile</SubType>
       <Link>src\common\spi.h</Link>
     </Compile>
-    <Compile Include="..\common\uart.c">
+    <Compile Include="..\lib\common\uart.c">
       <SubType>compile</SubType>
       <Link>src\common\uart.c</Link>
     </Compile>
-    <Compile Include="..\common\uart.h">
+    <Compile Include="..\lib\common\uart.h">
       <SubType>compile</SubType>
       <Link>src\common\uart.h</Link>
-    </Compile>
-    <Compile Include="src\drivers\adc.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\drivers\adc.h">
-      <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\drivers\motor.c">
       <SubType>compile</SubType>
@@ -204,7 +204,7 @@
     <Compile Include="src\drivers\servo.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\main.c">
+    <Compile Include="src\node2.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\rx.c">

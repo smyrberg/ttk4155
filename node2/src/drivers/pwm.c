@@ -17,7 +17,7 @@ void PWM_init( void )
 	// Set TOP = 5000, frequency = 50 Hz
 	ICR1 = F_CPU/(64*50);
 	
-	// Set OC1A to output
+	// Set OC1A (PB5 on arduino shield) to output
 	DDRB |= (1 << DDB5);
 	
 	// Set middle position of servo

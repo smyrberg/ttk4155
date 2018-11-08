@@ -22,7 +22,7 @@ void UART_Init(unsigned int ubrr)
 	#endif
 
 	fdevopen(&UART_Transmit, &UART_Recieve);
-	printf("ubrr: %d, UBRR: %d\r\n", ubrr, UBRR);
+	//printf("ubrr: %d, UBRR: %d\r\n", ubrr, UBRR);
 }
 
 void UART_Transmit (unsigned char data)

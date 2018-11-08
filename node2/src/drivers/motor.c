@@ -2,12 +2,86 @@
 #include "twi_handler.h"
 #include "TWI_Master.h"
 
+#include "common/uart.h"
+
 #define F_CPU 16000000L
 #include <util/delay.h>
 
 int16_t MOTOR_max_encoder_value;
 volatile uint8_t max_velocity = 0x60;
 const uint8_t init_velocity = 0x60;
+
+
+#include <stdlib.h>
+#include <math.h>
+#include <avr/interrupt.h>
+
+int Kp = 110;		//1.1*100
+int Ki = 10;		//1*10
+int Kd = 100;		//Kd * 1000
+
+volatile int run_controller_flag = 0;
+volatile uint8_t g_reference = 127;
+
+void MOTOR_start_controller()
+{
+	// OC3A disconnected. Normal port operation, Normal mode
+	
+	// Set prescaler to 1/64
+	TCCR3B |= (1 << CS31) | (1 << CS30);
+	
+	// Set the desired output compare match that will generate a timer interrupt
+	// Choose dt = 0.1 -> OCR3A = 12500
+	OCR3A = 0x30D4;
+	
+	// Enable output compare interrupt 3A
+	TIMSK3 |= (1 << OCIE3A);
+}
+
+void MOTOR_set_position(uint8_t reference_pos)
+{
+	g_reference = reference_pos;
+}
+
+int CONTROLLER_set_reference(uint8_t reference)
+{	
+	g_reference = reference;
+	int reff;
+	// 255 is rightmost position, 0 is leftmost position
+	reff = abs(reference - 0xFF);
+	return reff;
+}
+
+int CONTROLLER_run(int y, int reference)
+{
+	static int integral;
+	static int u;
+	static int prev_err;
+	int error;
+	int derivative;
+	int dt = 1;		//0.1*10
+	
+	switch(run_controller_flag){
+		case 0:
+			break;
+		case 1:
+			error = reference - y;
+			if (abs(error) > 10)
+			{
+				integral = integral + error*dt;
+			}
+			derivative = (error - prev_err)/dt;
+			u = Kp*error + Ki*integral + Kd*derivative;
+			prev_err = error;
+			run_controller_flag = 0;
+			break;
+	}
+	
+	return (int)u/100;
+}
+
+
+
 
 void MOTOR_init( void )
 {
@@ -24,6 +98,11 @@ void MOTOR_init( void )
 	
 	// Set some MJ1 pins to output, PH3 = SEL, PH5 = !OE, PH6 = RST
 	DDRH |= (1 << PH3) | (1 << PH5)| (1 << PH6);
+	
+	//MOTOR_find_limits();
+	//CONTROLLER_init_timer();
+
+	
 }
 
 void MOTOR_find_limits( void )
@@ -129,4 +208,28 @@ int MOTOR_read_scaled_encoder( void )
 	// Scaled between 0 and 255
 	float encoder_value = (float)MOTOR_read_encoder()/MOTOR_max_encoder_value * 0xFF;
 	return (int)encoder_value;
+}
+
+
+ISR(TIMER3_COMPA_vect)
+{
+	// reset interrupt
+	TCNT3 = 0;
+
+	// PID
+	static int prev_error, integral, u;
+	int y, error, derivative, dt;	
+
+	y = MOTOR_read_scaled_encoder();
+	error = g_reference - y;
+	if (abs(error) > 10)
+	{
+		integral += error*dt;
+	}
+	derivative = (error - prev_error)/dt;
+	u = Kp*error;// + Ki*integral + Kd*derivative;
+	prev_error = error;
+
+	MOTOR_set_dir(u > 0);
+	MOTOR_set_velocity((uint8_t)u);
 }

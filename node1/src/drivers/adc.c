@@ -1,7 +1,7 @@
 #include "atmega_utils.h"
 
-#include "../../../common/bitmanip.h"
-#include "../../../common/uart.h"
+#include "common/bitmanip.h"
+#include "common/uart.h"
 
 #include <avr/io.h>
 #include <util/delay.h>

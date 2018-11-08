@@ -1,8 +1,8 @@
 #ifndef JOYSTICK_H_
 #define JOYSTICK_H_
 
-#define X_POS_CHANNEL 0
-#define Y_POS_CHANNEL 1
+#define X_POS_CHANNEL 1
+#define Y_POS_CHANNEL 0
 #define SLIDER_LEFT_CHANNEL 2
 #define SLIDER_RIGHT_CHANNEL 3
 
@@ -21,7 +21,7 @@ typedef struct JOY_pos {
 } JOY_position_t;
 
 void JOY_init(void);
-int JOY_button();
+int JOY_right_button();
 
 JOY_position_t JOY_get_position();
 JOY_direction_t JOY_get_direction();
