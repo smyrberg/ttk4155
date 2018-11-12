@@ -3,12 +3,15 @@
 #include "common/uart.h"
 
 #include "drivers/joystick.h"
+#include "drivers/oled.h"
+
+#include "menu.h"
 
 #include <util/delay.h>
 #include <avr/interrupt.h>
 #include <math.h>
 
-can_message_t pos2motorcmd(JOY_position_t pos)
+static can_message_t pos2motorcmd(JOY_position_t pos)
 {
 	uint8_t xpos = pos.x;
 	uint8_t direction = xpos < 127;
@@ -28,10 +31,15 @@ void main()
 	cli();
 	UART_Init(UBRR);
 	JOY_init();
+	OLED_init();
 	SPI_init();
-	CAN_init(0);	
+	CAN_init(0);
+	MENU_init();
 	sei();
 	
+	MENU_main();
+	return;
+
 	int shot_disallowed = 0;
 	while(1)
 	{

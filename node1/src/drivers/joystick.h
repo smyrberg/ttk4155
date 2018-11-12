@@ -1,8 +1,8 @@
 #ifndef JOYSTICK_H_
 #define JOYSTICK_H_
 
-#define X_POS_CHANNEL 1
-#define Y_POS_CHANNEL 0
+#define X_POS_CHANNEL 0
+#define Y_POS_CHANNEL 1
 #define SLIDER_LEFT_CHANNEL 2
 #define SLIDER_RIGHT_CHANNEL 3
 

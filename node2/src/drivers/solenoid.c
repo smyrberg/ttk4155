@@ -1,6 +1,8 @@
 #include "solenoid.h"
 #include "common/uart.h"
 
+#define F_CPU 16000000
+
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
@@ -13,7 +15,7 @@ void SOLENOID_init( void )
 	DDRF |= (1 << DDF1);
 	PORTF |= (1 << PF1);
 	
-	SOLENOID_timer_init();
+	// SOLENOID_timer_init();
 	
 }
 
@@ -22,11 +24,18 @@ void SOLENOID_shoot()
 	// This function should only be called if shoot has changed from 0 to 1
 	// (message received from 162 only when this happens)
 	if (g_can_shoot){
+		printf("shoot\r\n");
 		//set pin to 0
 		PORTF &= ~(1 << PF1);
 		g_can_shoot = 0;
+		_delay_ms(300);
+		PORTF |= (1 << PF1);
+		g_can_shoot = 1;
 	}
 }
+
+#if 0
+
 
 void SOLENOID_timer_init( void )
 {
@@ -45,5 +54,7 @@ void SOLENOID_timer_init( void )
 ISR(TIMER4_COMPA_vect)
 {	
 	PORTF |= (1 << PF1);
+	printf("hello from intrrupt\r\n");
 	g_can_shoot = 1;
 }
+#endif

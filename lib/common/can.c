@@ -132,7 +132,7 @@ void CAN_handle_interrupt(can_message_t *msg)
 	}
 }
 
-void default_receive_handler(can_message_t *msg)
+void CAN_default_receive_handler(can_message_t *msg)
 {
 	// discard no-message
 	if (msg->id == CAN_NO_MESSAGE) { return; }
@@ -146,7 +146,7 @@ void default_receive_handler(can_message_t *msg)
 }
 
 
-CAN_msg_handler_t receive_handler = default_receive_handler;
+CAN_msg_handler_t receive_handler = CAN_default_receive_handler;
 void CAN_set_receive_handler(CAN_msg_handler_t handler)
 {
 	receive_handler = handler;	
