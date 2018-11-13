@@ -53,6 +53,7 @@ void OLED_set_contrast( uint8_t level );
 void OLED_invert_screen();
 void OLED_print_char( char character);
 void OLED_print_arrow();
+void OLED_print_back_arrow();
 void OLED_clear_arrow();
 void OLED_printf(const char* fmt, ...);
 void OLED_smiley();

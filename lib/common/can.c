@@ -18,7 +18,6 @@ void CAN_init(int in_loopback){
 	// the falling edge of INT3 generates an interrupt request
 	MCUCR |= (1 << ISC01) | (0 << ISC00);
 	GICR |= (1 << INT0);
-	printf("initialized atmega162 CAN\r\n");
 	#endif
 
 	#if defined(__AVR_ATmega2560__)

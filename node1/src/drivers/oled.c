@@ -175,6 +175,22 @@ void OLED_print_arrow( void )
 
 }
 
+void OLED_print_back_arrow()
+{
+	OLED_write_data(0b00000000);
+	OLED_write_data(0b00000000);
+	OLED_write_data(0b00000000);
+	OLED_write_data(0b00011000);
+	OLED_write_data(0b00100100);
+	OLED_write_data(0b01000010);
+	OLED_write_data(0b10000001);
+	OLED_write_data(0b00000000);
+	OLED_write_data(0b00000000);
+	OLED_write_data(0b00000000);
+	
+	
+}
+
 void OLED_clear_arrow()
 {
 	for (int i = 0; i < 12; i++)
