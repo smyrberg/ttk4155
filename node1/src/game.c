@@ -10,9 +10,10 @@
 #include <stdlib.h>
 
 #define GAME_ITERATIONS 10000
+#define UPDATE_PERIOD_MS 50
 
 
-game_score_t g_score = {.time=0, .failures=0, .valid=1};
+game_score_t g_score = {.time_ms=0, .failures=0, .valid=1};
 uint8_t g_game_ready = 0;
 
 static void print_instructions()
@@ -25,6 +26,12 @@ static void print_instructions()
 	
 	OLED_pos(3, ARROW_WIDTH);
 	OLED_printf("right button to shoot");
+}
+
+static void print_score(game_score_t score)
+{
+	OLED_pos(4, ARROW_WIDTH);
+	OLED_printf("Fails: %2d, time:%2d", score.failures, score.time_ms / 1000);
 }
 
 static can_message_t pos2motorcmd(JOY_position_t pos)
@@ -79,17 +86,16 @@ void can_receive_handler(can_message_t *msg)
 		case CAN_MSG_IR_DETECTION:
 			g_score.failures++;
 			break;
-		case CAN_MSG_MOTOR_INIT_DONE:
-			g_game_ready = 1;
-			break;
 	}
-	
 }
 
 
-game_score_t GAME_texas()
+
+static game_score_t run_game(uint8_t control_mode)
 {
-	g_score = (game_score_t){.failures = 0, .time=0, .valid=1};
+	// reset score
+	g_score = (game_score_t){.failures = 0, .time_ms=0, .valid=1};
+	
 	// register receive handler
 	CAN_set_receive_handler(can_receive_handler);
 	
@@ -98,29 +104,41 @@ game_score_t GAME_texas()
 	OLED_printf("=== LETS PLAY ===");
 	print_instructions();
 	
+	_delay_ms(3000);
+	can_message_t start_msg = {.id=CAN_MSG_START_NODE2, .length=1, .data={control_mode}};
+	CAN_message_send(&start_msg);
+	
 	JOY_position_t joy_pos;
 	can_message_t multi_msg;
-	float done = 0;
-	for(int i = 0; i < GAME_ITERATIONS;i++)
+	printf("stating game\r\n");
+	while(g_score.time_ms < 20000)
 	{
 		// read from IO board
 		joy_pos	= JOY_get_position();
 		multi_msg = make_multi_msg(joy_pos, JOY_right_button());
 		CAN_message_send(&multi_msg);
-		printf("message sendt\r\n");
+		CAN_default_receive_handler(&multi_msg);
+
+		//update time
+		g_score.time_ms += UPDATE_PERIOD_MS;
 		
-		// update screen
-		done = (i / 10000.0 );
-		OLED_pos(4,ARROW_WIDTH);
-		OLED_printf("fail: %02d left: %02d/100 " , g_score.failures, (int)(done*100.0));
-		_delay_ms(20);
+		print_score(g_score);
+				
+		_delay_ms(UPDATE_PERIOD_MS);
 	}
+	
+	can_message_t stop_msg = {.id=CAN_MSG_STOP_NODE2, .length=0};
+	CAN_message_send(&stop_msg);
 	return g_score;
 }
 	
-game_score_t GAME_play()
+game_score_t GAME_pid()		{ return run_game(1); }
+game_score_t GAME_no_ctrl() { return run_game(0); }
+
+/*
+game_score_t GAME_no_ctrl()
 {
-	g_score = (game_score_t){.failures = 0, .time=0, .valid=1};
+	g_score = (game_score_t){.failures = 0, .time_ms=0, .valid=1};
 	// register receive handler
 	CAN_set_receive_handler(can_receive_handler);
 	
@@ -154,3 +172,4 @@ game_score_t GAME_play()
 	}
 	return g_score;
 }
+*/

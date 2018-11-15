@@ -28,13 +28,16 @@ static void view_highscores();
 static void reset_screen(uint8_t num_menu_items);
 
 // declare all menus (as they are referencing each other)
-menu_t m_main, m_start_game, m_quit;
+menu_t m_main, m_game, m_quit;
+menu_t m_game_no_ctrl, m_game_pid;
 menu_t m_highscores, m_highscores_view, m_highscores_delete;
 menu_t m_settings, m_settings_invert;
 
 // menu items
-menu_t m_main			   = {.name="Main Menu",		 .parent=&m_main, .children={&m_start_game, &m_highscores, &m_settings, &m_quit}, .child_count=4, .function_ptr=NULL};
-menu_t m_start_game		   = {.name="Start Game",		 .parent=&m_main, .children=NULL, .child_count=0, .function_ptr=&GAME_texas};
+menu_t m_main			   = {.name="Main Menu",		 .parent=&m_main, .children={&m_game, &m_highscores, &m_settings, &m_quit}, .child_count=4, .function_ptr=NULL};
+menu_t m_game			   = {.name="Games",			 .parent=&m_main, .children={&m_game_no_ctrl, &m_game_pid}, .child_count=2, .function_ptr=NULL};
+menu_t m_game_no_ctrl	   = {.name="No Control",		 .parent=&m_game, .children=NULL, .child_count=0, .function_ptr=&GAME_no_ctrl};
+menu_t m_game_pid		   = {.name="PID",				 .parent=&m_game, .children=NULL, .child_count=0, .function_ptr=&GAME_pid};
 menu_t m_quit			   = {.name="Quit",				 .parent=&m_main, .children=NULL, .child_count=0, .function_ptr=NULL};
 menu_t m_highscores		   = {.name="Highscores",		 .parent=&m_main, .children={&m_highscores_view, &m_highscores_delete}, .child_count=2, .function_ptr=NULL};
 menu_t m_highscores_view   = {.name="View Highscores",   .parent=&m_highscores, .children=NULL, .child_count=0, .function_ptr=&view_highscores};
@@ -239,7 +242,7 @@ static void print_score(int pos, game_score_t s)
 {
 	if (s.valid)
 	{
-		OLED_printf("%d. Time: %02d Fail: %02d",pos, s.time, s.failures);
+		OLED_printf("%d. Time: %02d Fail: %02d",pos, s.time_ms, s.failures);
 	}
 	else {
 		OLED_printf("%d. BLANK", pos);

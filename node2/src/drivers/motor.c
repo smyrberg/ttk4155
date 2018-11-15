@@ -38,6 +38,11 @@ void MOTOR_start_controller()
 	TIMSK3 |= (1 << OCIE3A);
 }
 
+void MOTOR_stop()
+{
+	TIMSK3 &= ~(1 << OCIE3A);
+}
+
 void MOTOR_set_position(uint8_t reference_pos)
 {
 	g_reference = reference_pos;

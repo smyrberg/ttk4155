@@ -6,14 +6,15 @@
 
 
 // message id
-#define CAN_MSG_SERVO_CMD 1 // data[0] = position (range 0-255)
-#define CAN_MSG_MOTOR_CMD 2 // data[0] = direction (0=right, 1=left), data[1] = speed (range 0-255)
-#define CAN_MSG_SOLENOID_CMD 3 // no data
-#define CAN_MSG_IR_DETECTION 4 // message == "beam has been broken, no data
-#define CAN_MSG_MOTOR_INIT_CMD 5 // initialize motor, no data
-#define CAN_MSG_MOTOR_INIT_DONE 6 // no data
-#define CAN_MSG_MULTI_CMD 7 // data[0]= servo_pos, data[1]=motor_dir, data[2]=motor_speed, data[3]=solenoid shoot
-#define CAN_MSG_NOP_CMD 10
+#define CAN_MSG_SERVO_CMD		1	// data[0] = position (range 0-255)
+#define CAN_MSG_MOTOR_CMD		2	// data[0] = direction (0=right, 1=left), data[1] = speed (range 0-255)
+#define CAN_MSG_SOLENOID_CMD	3	// no data
+#define CAN_MSG_IR_DETECTION	4	// message == "beam has been broken, no data
+#define CAN_MSG_START_NODE2		5	// data[0] = motor_control_mode_t
+#define CAN_MSG_STOP_NODE2		6	// 
+#define CAN_MSG_MULTI_CMD		7	// data[0]= servo_pos, data[1]=motor_dir, data[2]=motor_speed, data[3]=solenoid shoot
+#define CAN_MSG_TOO_MANY_FAILS	8
+#define CAN_MSG_NOP_CMD			10
 
 typedef struct {
 	unsigned int id;
