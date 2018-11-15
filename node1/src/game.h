@@ -11,6 +11,7 @@ typedef struct {
 
 
 game_score_t GAME_play();
+game_score_t GAME_texas();
 
 
 #endif /* GAME_H_ */

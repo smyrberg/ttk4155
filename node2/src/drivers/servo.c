@@ -18,7 +18,7 @@ void SERVO_set_pos(uint8_t pos) // 0-255
 
 void SERVO_set_position(uint8_t pos)
 {
-	uint16_t pulse_width = MIN + (uint16_t)(pos);
+	uint16_t pulse_width = MIN + (uint16_t)(255-pos);
 	
 	// clamp to min/max
 	if ( pulse_width > MAX){ 

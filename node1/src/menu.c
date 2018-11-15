@@ -25,6 +25,7 @@ typedef struct menu_t
 // internal function declarations
 static void delete_highscores();
 static void view_highscores();
+static void reset_screen(uint8_t num_menu_items);
 
 // declare all menus (as they are referencing each other)
 menu_t m_main, m_start_game, m_quit;
@@ -32,8 +33,8 @@ menu_t m_highscores, m_highscores_view, m_highscores_delete;
 menu_t m_settings, m_settings_invert;
 
 // menu items
-menu_t m_main			   = {.name="Main Menu",		 .parent=&m_main, .children={&m_start_game, &m_highscores_view, &m_highscores_delete, &m_quit}, .child_count=4, .function_ptr=NULL};
-menu_t m_start_game		   = {.name="Start Game",		 .parent=&m_main, .children=NULL, .child_count=0, .function_ptr=NULL};
+menu_t m_main			   = {.name="Main Menu",		 .parent=&m_main, .children={&m_start_game, &m_highscores, &m_settings, &m_quit}, .child_count=4, .function_ptr=NULL};
+menu_t m_start_game		   = {.name="Start Game",		 .parent=&m_main, .children=NULL, .child_count=0, .function_ptr=&GAME_texas};
 menu_t m_quit			   = {.name="Quit",				 .parent=&m_main, .children=NULL, .child_count=0, .function_ptr=NULL};
 menu_t m_highscores		   = {.name="Highscores",		 .parent=&m_main, .children={&m_highscores_view, &m_highscores_delete}, .child_count=2, .function_ptr=NULL};
 menu_t m_highscores_view   = {.name="View Highscores",   .parent=&m_highscores, .children=NULL, .child_count=0, .function_ptr=&view_highscores};
@@ -43,26 +44,24 @@ menu_t m_settings_invert   = {.name="Invert Screen",	 .parent=&m_settings, .chil
 	
 void print_menu_items(menu_t *menu)
 {	
+	reset_screen(menu->child_count);
 	// print header
 	OLED_pos(0, ARROW_WIDTH);
 	OLED_printf("%s", menu->name);
 	
 	// print children
-	if (menu->children)
+	for (int i = 0; i < menu->child_count; i++)
 	{
-		int i = 0;
-		while (menu->children[i] != NULL)
-		{
-			OLED_pos(i+1, ARROW_WIDTH);
-			OLED_printf("%d. %s", i+1, menu->children[i]->name);
-		}
+		OLED_pos(i+1, ARROW_WIDTH);
+		OLED_printf("%d. %s", i+1, menu->children[i]->name);
 	}
+
 	
 	// print parent
-	uint8_t is_root = menu->parent == menu->parent;
+	uint8_t is_root = menu->parent == menu;
 	if (menu->parent != NULL && !is_root)
 	{
-		OLED_pos(MENU_ITEMS+2, 0);
+		OLED_pos(MENU_ITEMS+1, 0);
 		OLED_print_back_arrow();
 		OLED_printf("%s", menu->parent->name);
 	}
@@ -76,12 +75,12 @@ static menu_direction_t get_joystick_direction()
 	if (pos.y > 240) 
 	{ 
 		while(JOY_get_position().y > 240);
-		return menu_down;  
+		return menu_up;  
 	}
 	if (pos.y <  15) 
 	{ 
 		while(JOY_get_position().y < 15);
-		return menu_up;    
+		return menu_down;    
 	}
 	if (pos.x > 240) 
 	{ 
@@ -95,7 +94,7 @@ static menu_direction_t get_joystick_direction()
 	}
 }
 
-static uint8_t move_cursor(menu_direction_t direction)
+static uint8_t move_cursor(menu_direction_t direction, uint8_t num_items)
 {
 	static uint8_t line = 0;
 	
@@ -109,7 +108,7 @@ static uint8_t move_cursor(menu_direction_t direction)
 			line = line > 0 ? line-1 : 0;
 			break;
 		case menu_down:
-			line = line < MENU_ITEMS ? line+1 : MENU_ITEMS;
+			line = line < num_items ? line+1 : num_items;
 			break;
 		case menu_left:
 		case menu_right:
@@ -140,6 +139,13 @@ void print_cursor()
 	OLED_pos(cursor_line, 0);
 	OLED_print_arrow();
 }
+
+static void reset_screen(uint8_t num_menu_items)
+{
+	OLED_reset();
+	move_cursor(menu_nop, num_menu_items);
+}
+
 
 void print_main_menu()
 {
@@ -288,7 +294,7 @@ uint8_t MENU_main()
 	print_menu_items(current_menu);
 	
 	// get cursor position
-	uint8_t cursor_pos = move_cursor(menu_nop);
+	uint8_t cursor_pos = move_cursor(menu_nop, current_menu->child_count);
 	
 	menu_direction_t menu_direction;
 	for(;;)
@@ -298,7 +304,7 @@ uint8_t MENU_main()
 		{
 			case menu_up:
 			case menu_down:
-				 cursor_pos = move_cursor(menu_direction);
+				 cursor_pos = move_cursor(menu_direction, current_menu->child_count);
 				 break;
 			case menu_right:
 				// Check if there is a valid menu entry at cursor

@@ -7,6 +7,7 @@
 #include "common/can.h"
 
 #include <avr/delay.h>
+#include <stdlib.h>
 
 #define GAME_ITERATIONS 10000
 
@@ -41,6 +42,24 @@ static can_message_t pos2motorcmd(JOY_position_t pos)
 	return msg;
 }
 
+static can_message_t make_multi_msg(JOY_position_t pos, uint8_t shoot)
+{
+	uint8_t xpos = pos.x;
+	uint8_t direction = xpos < 127;
+	
+	uint8_t speed = 2 * abs(127-xpos);
+	speed = (speed < 15) ? 0 : speed;
+	
+	can_message_t msg = {.id=CAN_MSG_MULTI_CMD, .length=4};
+	msg.data[0] = direction;
+	msg.data[1] = speed;
+	
+	msg.data[2] = pos.y;
+	msg.data[3] = shoot;
+
+	return msg;
+}
+
 static can_message_t pos2servocmd(JOY_position_t pos)
 {
 	return (can_message_t){.id=CAN_MSG_SERVO_CMD, .length=1, .data=pos.y};
@@ -49,7 +68,7 @@ static can_message_t pos2servocmd(JOY_position_t pos)
 static can_message_t create_solenoid_msg()
 {
 	return JOY_right_button() ? 
-		(can_message_t){.id=CAN_MSG_SOLENOID_CMD, .length=0}: 
+		(can_message_t){.id=CAN_MSG_SOLENOID_CMD, .length=1} : 
 		(can_message_t){.id=CAN_MSG_NOP_CMD};
 }
 
@@ -68,6 +87,37 @@ void can_receive_handler(can_message_t *msg)
 }
 
 
+game_score_t GAME_texas()
+{
+	g_score = (game_score_t){.failures = 0, .time=0, .valid=1};
+	// register receive handler
+	CAN_set_receive_handler(can_receive_handler);
+	
+	OLED_reset();
+	OLED_pos(0, ARROW_WIDTH);
+	OLED_printf("=== LETS PLAY ===");
+	print_instructions();
+	
+	JOY_position_t joy_pos;
+	can_message_t multi_msg;
+	float done = 0;
+	for(int i = 0; i < GAME_ITERATIONS;i++)
+	{
+		// read from IO board
+		joy_pos	= JOY_get_position();
+		multi_msg = make_multi_msg(joy_pos, JOY_right_button());
+		CAN_message_send(&multi_msg);
+		printf("message sendt\r\n");
+		
+		// update screen
+		done = (i / 10000.0 );
+		OLED_pos(4,ARROW_WIDTH);
+		OLED_printf("fail: %02d left: %02d/100 " , g_score.failures, (int)(done*100.0));
+		_delay_ms(20);
+	}
+	return g_score;
+}
+	
 game_score_t GAME_play()
 {
 	g_score = (game_score_t){.failures = 0, .time=0, .valid=1};

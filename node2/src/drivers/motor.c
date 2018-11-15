@@ -80,9 +80,6 @@ int CONTROLLER_run(int y, int reference)
 	return (int)u/100;
 }
 
-
-
-
 void MOTOR_init( void )
 {
 	TWI_Master_Initialise();
@@ -110,9 +107,9 @@ void MOTOR_find_limits( void )
 	// *** Calibrate ***
 	MOTOR_set_dir(MOTOR_right);
 	max_velocity = init_velocity;
-	MOTOR_set_velocity(init_velocity);
+	MOTOR_set_vel(init_velocity);
 	_delay_ms(2000);
-	MOTOR_set_velocity(0);
+	MOTOR_set_vel(0);
 	
 	// Reset encoder
 	PORTH &= ~(1 << PH6);
@@ -121,9 +118,9 @@ void MOTOR_find_limits( void )
 	
 	// Find max encoder value
 	MOTOR_set_dir(MOTOR_left);
-	MOTOR_set_velocity(init_velocity);
+	MOTOR_set_vel(init_velocity);
 	_delay_ms(2000);
-	MOTOR_set_velocity(0);
+	MOTOR_set_vel(0);
 	MOTOR_max_encoder_value = MOTOR_read_encoder();
 }
 
@@ -154,7 +151,7 @@ void MOTOR_set_max_velocity(int speed)
 	}
 }
 
-void MOTOR_set_velocity(uint8_t vel)
+void MOTOR_set_vel(uint8_t vel)
 {
 	uint8_t velocity[1];
 	if (vel < max_velocity)
@@ -231,5 +228,5 @@ ISR(TIMER3_COMPA_vect)
 	prev_error = error;
 
 	MOTOR_set_dir(u > 0);
-	MOTOR_set_velocity((uint8_t)u);
+	MOTOR_set_vel((uint8_t)u);
 }

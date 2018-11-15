@@ -21,17 +21,13 @@ void SOLENOID_init( void )
 
 void SOLENOID_shoot()
 {
-	// This function should only be called if shoot has changed from 0 to 1
-	// (message received from 162 only when this happens)
-	if (g_can_shoot){
-		printf("shoot\r\n");
-		//set pin to 0
-		PORTF &= ~(1 << PF1);
-		g_can_shoot = 0;
-		_delay_ms(300);
-		PORTF |= (1 << PF1);
-		g_can_shoot = 1;
-	}
+	cli();
+	//set pin to 0
+	PORTF &= ~(1 << PF1);
+	_delay_ms(100);
+	PORTF |= (1 << PF1);
+	_delay_ms(20);
+	sei();
 }
 
 #if 0

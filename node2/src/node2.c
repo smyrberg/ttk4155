@@ -1,4 +1,3 @@
-#if 1
 #define F_CPU 16000000
 #include "drivers/servo.h"
 #include "drivers/pwm.h"
@@ -13,71 +12,85 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
+// local declarations
 void nop_handler(can_message_t *msg){};
+void on_incoming_CAN(can_message_t * msg);
+static void broadcast_IR();
+typedef enum control_mode_t {no_control, pid_position_control} control_mode_t;
 
-void can_msg_handler(can_message_t *msg)
-{	
-	switch(msg->id)
-	{
-		case  CAN_MSG_SERVO_CMD:
-			//printf("servo: %d\r\n", msg->data[0]);
-			SERVO_set_pos(255 - msg->data[0]);
-			break;
-		case CAN_MSG_MOTOR_CMD:
-			MOTOR_set_dir(msg->data[0]);
-			MOTOR_set_velocity(msg->data[1]);
-			break;
-		case CAN_MSG_SOLENOID_CMD:
-			SOLENOID_shoot();
-			break;
-	}
-}
+can_message_t *g_multi_msg;
+control_mode_t g_motor_mode;
+
+
 
 int main()
 {
+	// initialize
 	cli();
 	UART_Init(UBRR);
 	SPI_init();
 	CAN_init(0);
-	CAN_set_receive_handler(nop_handler);
+	CAN_set_receive_handler(nop_handler); //ignore can during motor init
 	PWM_init();
 	IR_init();
 	MOTOR_init();
 	SOLENOID_init();
 	sei();
 	
-	MOTOR_find_limits();
-	//CAN_set_receive_handler(CAN_default_receive_handler);
-	CAN_set_receive_handler(can_msg_handler);
-	//MOTOR_start_controller();
-
-
-	printf("init done\r\n");
+	g_multi_msg = &(can_message_t){.id=CAN_MSG_MULTI_CMD, .length=4, .data={0,0,127,0}};
+	g_motor_mode = no_control;
 	
-	can_message_t ir_msg;
-	uint8_t ir_enable = 1;
-	int i = 0;
+	//MOTOR_find_limits();
+	//MOTOR_start_controller();
+	
+	
+	CAN_set_receive_handler(&on_incoming_CAN);
+	
+	can_message_t msg;
 	while(1)
 	{	
+		msg = *g_multi_msg;
 		
-		if (IR_beam_broken() && ir_enable)
+		//CAN_default_receive_handler(&msg); // TODO: remove debugging
+		
+		/*
+		MOTOR_set_dir(msg.data[0]);
+		MOTOR_set_vel(msg.data[1]);
+		SERVO_set_pos(msg.data[2]);
+		if(msg.data[3]) { SOLENOID_shoot(); }
+		*/
+		
+		
+		switch(g_motor_mode)
 		{
-			printf("IR broken\r\n");
-			ir_msg = (can_message_t){.id=CAN_MSG_IR_DETECTION, .length=0};
-			CAN_message_send(&ir_msg);
-			ir_enable = 0;
+			case no_control:
+				MOTOR_set_dir(msg.data[0]);
+				MOTOR_set_vel(msg.data[1]);
+				SERVO_set_pos(msg.data[2]);
+				if(msg.data[3]) { SOLENOID_shoot(); }
+				break;
+			case pid_position_control:
+				MOTOR_set_position(msg.data[2]);
+				break;
 		}
-		else if (!IR_beam_broken())
+	
+		/*
+		if (IR_beam_broken())
 		{
-			ir_enable = 1;
+			can_message_t msg = {.id=CAN_MSG_IR_DETECTION, .length=0};
+			CAN_message_send(&msg);
+			printf("IR broken \r\n");
 		}
-		
-		printf("ADC_read() = %d\r\n", ADC_read());
-		
-		//SOLENOID_shoot();		
-		_delay_ms(50);
-		//printf("\n");
+		*/
+		_delay_ms(100);
 	}
 }
 
-#endif
+
+void on_incoming_CAN(can_message_t * msg)
+{
+	if (msg->id == CAN_MSG_MULTI_CMD)
+	{
+		g_multi_msg = msg;
+	}
+}
