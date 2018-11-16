@@ -18,7 +18,7 @@ void main()
 	JOY_init();
 	OLED_init();
 	SPI_init();
-	CAN_init(0);
+	CAN_init(CAN_normal_mode);
 	MENU_init();
 	sei();
 	

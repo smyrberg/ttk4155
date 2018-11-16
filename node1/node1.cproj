@@ -199,6 +199,12 @@
     <Compile Include="src\menu.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\menu_items.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\menu_items.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\node1.c">
       <SubType>compile</SubType>
     </Compile>

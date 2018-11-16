@@ -1,5 +1,72 @@
 #include "menu.h"
 #include "game.h"
+#include "common/uart.h"
+#include <avr/delay.h>
+
+#define LOOP_DELAY_MS 40
+
+// internal declarations
+static menu_direction_t get_joystick_direction();
+
+typedef enum cursor_direction_t {
+	cursor_up_down,
+	cursor_left_right
+} cursor_direction_t;
+
+
+void MENU_init()
+{
+	printf("[MENU] initialization done\r\n");
+}
+
+uint8_t MENU_main()
+{
+	while(1)
+	{
+		cursor_direction_t cursor_dir = get_joystick_direction();
+		
+		
+	}
+}
+
+
+static menu_direction_t get_joystick_direction()
+{
+	JOY_position_t pos = JOY_get_position();
+	if (pos.y > 240)
+	{
+		while(JOY_get_position().y > 240);
+		return menu_up;
+	}
+	if (pos.y <  15)
+	{
+		while(JOY_get_position().y < 15);
+		return menu_down;
+	}
+	if (pos.x > 240)
+	{
+		while(JOY_get_position().x > 240);
+		return menu_right;
+	}
+	if (pos.x < 15 )
+	{
+		while(JOY_get_position().x < 15);
+		return menu_left;
+	}
+}
+
+
+
+
+
+
+
+
+
+#if 0 // OLD MAIN
+#include "menu.h"
+#include "game.h"
+#include "menu_items.h"
 
 #include "drivers/oled.h"
 #include "drivers/joystick.h"
@@ -7,43 +74,16 @@
 #include "common/uart.h"
 
 #include <avr/delay.h>
-
-#define MENU_ITEMS 4
 #define NUM_SCORES 5
 
-// must declare type first so it can be self-referential
-typedef struct menu_t menu_t;
-typedef struct menu_t
-{
-	char *name;
-	menu_t *parent;
-	menu_t *children[MENU_ITEMS];
-	uint8_t child_count;
-	void (*function_ptr)(void);
-};
+
 
 // internal function declarations
 static void delete_highscores();
 static void view_highscores();
 static void reset_screen(uint8_t num_menu_items);
 
-// declare all menus (as they are referencing each other)
-menu_t m_main, m_game, m_quit;
-menu_t m_game_no_ctrl, m_game_pid;
-menu_t m_highscores, m_highscores_view, m_highscores_delete;
-menu_t m_settings, m_settings_invert;
 
-// menu items
-menu_t m_main			   = {.name="Main Menu",		 .parent=&m_main, .children={&m_game, &m_highscores, &m_settings, &m_quit}, .child_count=4, .function_ptr=NULL};
-menu_t m_game			   = {.name="Games",			 .parent=&m_main, .children={&m_game_no_ctrl, &m_game_pid}, .child_count=2, .function_ptr=NULL};
-menu_t m_game_no_ctrl	   = {.name="No Control",		 .parent=&m_game, .children=NULL, .child_count=0, .function_ptr=&GAME_no_ctrl};
-menu_t m_game_pid		   = {.name="PID",				 .parent=&m_game, .children=NULL, .child_count=0, .function_ptr=&GAME_pid};
-menu_t m_quit			   = {.name="Quit",				 .parent=&m_main, .children=NULL, .child_count=0, .function_ptr=NULL};
-menu_t m_highscores		   = {.name="Highscores",		 .parent=&m_main, .children={&m_highscores_view, &m_highscores_delete}, .child_count=2, .function_ptr=NULL};
-menu_t m_highscores_view   = {.name="View Highscores",   .parent=&m_highscores, .children=NULL, .child_count=0, .function_ptr=&view_highscores};
-menu_t m_highscores_delete = {.name="Delete Highscores", .parent=&m_highscores, .children=NULL, .child_count=0, .function_ptr=&delete_highscores};
-menu_t m_settings		   = {.name="Settings",			 .parent=&m_main,  .children={&m_settings_invert}, .child_count=1, .function_ptr=NULL};
-menu_t m_settings_invert   = {.name="Invert Screen",	 .parent=&m_settings, .children=NULL, .child_count=0, .function_ptr=&OLED_invert_screen};
 	
 void print_menu_items(menu_t *menu)
 {	
@@ -72,30 +112,27 @@ void print_menu_items(menu_t *menu)
 
 
 typedef enum {menu_up, menu_down, menu_left, menu_right, menu_nop} menu_direction_t;
-static menu_direction_t get_joystick_direction()
+
+
+static int get_joystick_input(cursor_direction_t cursor_axis)
 {
 	JOY_position_t pos = JOY_get_position();
-	if (pos.y > 240) 
-	{ 
-		while(JOY_get_position().y > 240);
-		return menu_up;  
+	int value = cursor_axis == cursor_up_down ? pos.y : pos.x;
+	if (value > 240)
+	{
+		return 1;
 	}
-	if (pos.y <  15) 
-	{ 
-		while(JOY_get_position().y < 15);
-		return menu_down;    
+	else if (value < 15)
+	{
+		return -1;
 	}
-	if (pos.x > 240) 
-	{ 
-		while(JOY_get_position().x > 240);
-		return menu_right; 
-	}
-	if (pos.x < 15 ) 
-	{ 
-		while(JOY_get_position().x < 15);
-		return menu_left;  
+	else
+	{
+		return 0;
 	}
 }
+
+
 
 static uint8_t move_cursor(menu_direction_t direction, uint8_t num_items)
 {
@@ -176,23 +213,7 @@ void print_main_menu()
 
 typedef enum cursor_direction {cursor_up_down, cursor_left_right} cursor_direction_t;
 
-static int get_joystick_input(cursor_direction_t cursor_axis)
-{
-	JOY_position_t pos = JOY_get_position();
-	int value = cursor_axis == cursor_up_down ? pos.y : pos.x;
-	if (value > 240)
-	{
-		return 1;
-	} 
-	else if (value < 15)
-	{
-		return -1;
-	}
-	else
-	{
-		return 0;
-	}
-}
+
 
 void MENU_cursor_up_on_screen()
 {
@@ -333,7 +354,7 @@ uint8_t MENU_main()
 }
 
 
-#if 0 // OLD MAIN
+
 uint8_t MENU_main()
 {
 	print_main_menu();

@@ -20,7 +20,7 @@ int main()
 	MOTOR_init();
 	MOTOR_find_limits();
 	SOLENOID_init();
-	CAN_init(0);
+	CAN_init(CAN_normal_mode);
 	sei();
 	
 	
