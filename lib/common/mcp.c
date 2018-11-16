@@ -1,4 +1,5 @@
 #include "mcp.h"
+#include "uart.h"
 
 void MCP_init(int in_loopback)
 {
@@ -13,10 +14,10 @@ void MCP_init(int in_loopback)
 	
 	// set mode for controller
 	if(in_loopback){
-		printf("MCP in loopback mode\r\n");
+		printf("[CAN] MCP in loopback mode\r\n");
 		MCP_set_mode(MODE_LOOPBACK); // Sets loopback operation mode for testing
 	} else {
-		printf("MCP in normal mode\r\n");
+		printf("[CAN] MCP in normal mode\r\n");
 		MCP_set_mode(MODE_NORMAL); // Sets normal operation mode
 	}
 }

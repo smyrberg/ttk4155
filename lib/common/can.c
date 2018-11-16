@@ -1,58 +1,63 @@
 #include "can.h"
 #include "uart.h"
+#include "MCP2515.h"
+#include "mcp.h"
 #include <avr/interrupt.h>
 
+// internal enums and functions
+enum interrupt_flags {no_flag, RX0, RX1};
 enum interrupt_flags interrupt_flag = no_flag; 
+static void read_msg_from_register(can_msg_t *msg, uint8_t reg);
 
-void CAN_init(int in_loopback){
-	MCP_init(in_loopback);
+
+void CAN_init(can_mode_t mode)
+{
+	MCP_init(mode);
 	
 	// enable interrupt on CAN controller (enable CANINTE.RXnIE)
 	MCP_write(MCP_CANINTE, MCP_RX_INT);
-	
-	
-	
-	
+		
 	// set up interrupt pins on ATmega	
 	#if defined(__AVR_ATmega162__)
 	// the falling edge of INT3 generates an interrupt request
 	MCUCR |= (1 << ISC01) | (0 << ISC00);
 	GICR |= (1 << INT0);
+	printf("[CAN] initialization done (ATmega162)\r\n");
 	#endif
 
 	#if defined(__AVR_ATmega2560__)
 	// the falling edge of INT3 generates an interrupt request
 	EICRA |= (1 << ISC31) | (0 << ISC30);
-	// Enable external interrupts of INT3
+	// enable external interrupts of INT3
 	EIMSK |= (1 << INT3);
-	printf("initialized atmega2560 CAN\r\n");
+	printf("[CAN] initialization done (ATmega2560)\r\n");
 	#endif
 	
 }
 
-void CAN_msg_send(can_message_t *message)
+bool CAN_get_latest_msg(can_msg_t *msg)
 {
-	// Write ID to TXB0SIDH
-	MCP_write(MCP_TXB0SIDH, (message->id) >> 3);
-	// Write 0 to TXB0SIDL and extended identifier registers
-	MCP_write(MCP_TXB0SIDL, (message->id) << 5);
-	MCP_write(MCP_TXB0EID8, 0);
-	MCP_write(MCP_TXB0EID0, 0);
-	
-	//Write data length
-	MCP_write(MCP_TXB0DLC, message->length);
-	
-	for (int i = 0; i < message->length; i++){
-		MCP_write(MCP_TXB0SIDH + 5 + i, message->data[i] );
+	switch(interrupt_flag)
+	{
+		case no_flag:
+			return false;
+		case RX0:
+			read_msg_from_register(msg, MCP_RXB0CTRL);
+			interrupt_flag = no_flag;
+			return true;
+		case RX1:
+			read_msg_from_register(msg, MCP_RXB1CTRL);
+			interrupt_flag = no_flag;
+			return true;
 	}
-	MCP_request_to_send(MCP_RTS_TX0);
+	return false;
 }
 
-/* High level function for sending a message on the CAN bus */
-void CAN_message_send(can_message_t* msg){
-	/* Only transmit buffer TXB0 is used */
+void CAN_message_send(can_msg_t* msg)
+{
+	// NOTE: we only use the TXB0 buffer
 	
-	/* Loop until TXREQ is cleared */
+	// loop until TXREQ is cleared  
 	uint8_t status , txreq;
 	do {
 		status = MCP_read_status();
@@ -60,43 +65,68 @@ void CAN_message_send(can_message_t* msg){
 
 	} while(txreq);
 
-	/* Set message ID, standard mode*/
-	MCP_write(MCP_TXB0CTRL + 1, 0); // High level identifier
-	MCP_write(MCP_TXB0CTRL + 2, (msg->id << 5)); // Low level identifier
+	// set message ID, standard mode 
+	MCP_write(MCP_TXB0CTRL + 1, 0);					// high level identifier
+	MCP_write(MCP_TXB0CTRL + 2, (msg->id << 5));	// low level identifier
 	
-	/* Set data length */
+	// set data length  
 	MCP_write(MCP_TXB0CTRL + 5, msg->length & 0x0F);
 	
-	/* Load message data */
-	for (uint8_t i = 0; i < msg->length; i++) {
+	// load message data  
+	for (uint8_t i = 0; i < msg->length; i++) 
+	{
 		MCP_write(MCP_TXB0CTRL + 6 + i, msg->data[i]);
 	}
 	
-	/* Request to send contents of TXB0 */
+	// request to send contents of TXB0  
 	MCP_request_to_send(MCP_RTS_TX0);
 }
 
-can_message_t CAN_message_receive(void){
-	/* Only RXB0 is used */
-	
-	can_message_t message;
-	uint8_t buffer = MCP_read(MCP_RXB0SIDH + 1);
-	message.id = (buffer >> 5);
-	buffer = MCP_read(MCP_RXB0CTRL + 5);
-	message.length = (buffer & 0x0F);
-	for (uint8_t i = 0; i < message.length; i++) {
-		message.data[i] = MCP_read(MCP_RXB0CTRL + 6 + i);
+void CAN_print(can_msg_t *msg)
+{
+	printf("[CAN] .id: %d, length: %d data: [ ", msg->id, msg->length);
+	for (int i = 0; i < msg->length; i++)
+	{
+		printf("%03d ", msg->data[i]);
 	}
-	
-	/* Clear CANINTF.RX0IF */
-	MCP_modify_bit(MCP_CANINTF, 0x01, 0x00);
-	
-	uint8_t canintf = MCP_read(MCP_CANINTF);
-	
-	return message;
+	printf("]\r\n");
 }
 
-void CAN_msg_receive(can_message_t *msg, uint8_t reg)
+can_msg_type_t	CAN_get_msg_type(can_msg_t *msg)
+{
+	return msg->id;
+}
+
+
+// interrupt pin on different nodes
+#if defined(__AVR_ATmega162__)
+	#define INTERRUPT_PIN INT0_vect
+#endif
+#if defined(__AVR_ATmega2560__)
+	#define INTERRUPT_PIN INT2_vect
+#endif
+
+// define interrupt handler
+ISR(INTERRUPT_PIN){
+	uint8_t interrupt = MCP_read(MCP_CANINTF);
+
+	if (interrupt & MCP_RX0IF){
+		interrupt_flag = RX0;
+		// clear CANINTF.RX0IF
+		MCP_modify_bit(MCP_CANINTF, 0x01, 0x00);
+	}
+	else if (interrupt & MCP_RX1IF){
+		interrupt_flag = RX1;
+		// clear CANINTF.RX1IF
+		MCP_modify_bit(MCP_CANINTF, 0x02, 0x00);
+	}
+}
+
+
+
+
+
+static void read_msg_from_register(can_msg_t *msg, uint8_t reg)
 {
 	// RXBnSIDH and RXBnSIDL (id)
 	msg->id = (MCP_read(reg + 1) << 3) | (MCP_read(reg + 2) >> 5);
@@ -111,87 +141,3 @@ void CAN_msg_receive(can_message_t *msg, uint8_t reg)
 	}
 }
 
-void CAN_handle_interrupt(can_message_t *msg)
-{
-	
-	switch(interrupt_flag){
-		case no_flag:
-			msg->data[0] = CAN_NO_MESSAGE;
-			break;
-		case RX0:
-			CAN_msg_receive(msg, MCP_RXB0CTRL);
-			interrupt_flag = no_flag;
-			break;
-		case RX1:
-			CAN_msg_receive(msg, MCP_RXB1CTRL);
-			interrupt_flag = no_flag;
-			break;
-		default:
-			break;
-	}
-}
-
-void CAN_default_receive_handler(can_message_t *msg)
-{
-	// discard no-message
-	if (msg->id == CAN_NO_MESSAGE) { return; }
-
-	printf("[CAN] .id: %d, length: %d data: [ ", msg->id, msg->length);
-	for (int i = 0; i < msg->length; i++)
-	{
-		printf("%03d ", msg->data[i]);
-	}
-	printf("]\r\n");
-}
-
-
-CAN_msg_handler_t receive_handler = CAN_default_receive_handler;
-void CAN_set_receive_handler(CAN_msg_handler_t handler)
-{
-	receive_handler = handler;	
-}
-
-
-
-// register interrupt handlers for incoming CAN messages
-#if defined(__AVR_ATmega162__)
-ISR(INT0_vect){
-	uint8_t interrupt = MCP_read(MCP_CANINTF);
-
-	if (interrupt & MCP_RX0IF){
-		interrupt_flag = RX0;
-		// clear CANINTF.RX0IF
-		MCP_modify_bit(MCP_CANINTF, 0x01, 0x00);
-	}
-	else if (interrupt & MCP_RX1IF){
-		interrupt_flag = RX1;
-		// clear CANINTF.RX1IF
-		MCP_modify_bit(MCP_CANINTF, 0x02, 0x00);
-	}
-
-	can_message_t msg;
-	CAN_handle_interrupt(&msg);
-	receive_handler(&msg);
-}
-#endif
-
-#if defined(__AVR_ATmega2560__)
-ISR(INT3_vect){
-	uint8_t interrupt = MCP_read(MCP_CANINTF);
-
-	if (interrupt & MCP_RX0IF){
-		interrupt_flag = RX0;
-		// clear CANINTF.RX0IF
-		MCP_modify_bit(MCP_CANINTF, 0x01, 0x00);
-	}
-	else if (interrupt & MCP_RX1IF){
-		interrupt_flag = RX1;
-		// clear CANINTF.RX1IF
-		MCP_modify_bit(MCP_CANINTF, 0x02, 0x00);
-	}
-
-	can_message_t msg;
-	CAN_handle_interrupt(&msg);
-	receive_handler(&msg);
-}
-#endif

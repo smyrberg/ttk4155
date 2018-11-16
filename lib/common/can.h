@@ -1,42 +1,31 @@
 #ifndef CAN_H_
 #define CAN_H_
 
-#include "MCP2515.h"
-#include "mcp.h"
+#include <stdbool.h>
+#include <stdio.h>
 
-
-// message id
-#define CAN_MSG_SERVO_CMD		1	// data[0] = position (range 0-255)
-#define CAN_MSG_MOTOR_CMD		2	// data[0] = direction (0=right, 1=left), data[1] = speed (range 0-255)
-#define CAN_MSG_SOLENOID_CMD	3	// no data
-#define CAN_MSG_IR_DETECTION	4	// message == "beam has been broken, no data
-#define CAN_MSG_START_NODE2		5	// data[0] = motor_control_mode_t
-#define CAN_MSG_STOP_NODE2		6	// 
-#define CAN_MSG_MULTI_CMD		7	// data[0]= servo_pos, data[1]=motor_dir, data[2]=motor_speed, data[3]=solenoid shoot
-#define CAN_MSG_TOO_MANY_FAILS	8
-#define CAN_MSG_NOP_CMD			10
+typedef enum can_msg_type_t{
+	CAN_msg_set_mode,
+	CAN_msg_command,
+	CAN_msg_ir
+} can_msg_type_t;
 
 typedef struct {
 	unsigned int id;
 	uint8_t length;
 	uint8_t data[8];
-} can_message_t;
+} can_msg_t;
 
-typedef void (*CAN_msg_handler_t) (can_message_t*);
+typedef enum can_mode_t {
+	CAN_normal_mode = 0,
+	CAN_loopback_mod
+} can_mode_t;
 
-enum interrupt_flags {no_flag, RX0, RX1};
-#define CAN_NO_MESSAGE	0x0A	//10
-
-void CAN_init(int in_loopback);
-void CAN_message_send(can_message_t* msg);
-can_message_t CAN_message_receive(void);
-
-void CAN_msg_send(can_message_t *message);
-void CAN_msg_receive(can_message_t *msg, uint8_t reg);
-void CAN_handle_interrupt(can_message_t *msg);
-
-void CAN_set_receive_handler(CAN_msg_handler_t handler);
-void CAN_default_receive_handler(can_message_t *msg);
+void CAN_init(can_mode_t mode);
+void CAN_message_send(can_msg_t *msg);
+bool CAN_get_latest_msg(can_msg_t *msg);
+can_msg_type_t	CAN_get_msg_type(can_msg_t *msg);
+void CAN_print(can_msg_t *msg);
 
 
 #endif /* CAN_H_ */

@@ -1,78 +1,190 @@
 #include "motor.h"
 #include "twi_handler.h"
 #include "TWI_Master.h"
-
 #include "common/uart.h"
-
-#define F_CPU 16000000L
-#include <util/delay.h>
-
-int16_t MOTOR_max_encoder_value;
-volatile uint8_t max_velocity = 0x60;
-const uint8_t init_velocity = 0x60;
-
-
-#include <stdlib.h>
+#include <avr/delay.h>
 #include <math.h>
-#include <avr/interrupt.h>
 
-int Kp = 110;		//1.1*100
-int Ki = 10;		//1*10
-int Kd = 100;		//Kd * 1000
 
-volatile int run_controller_flag = 0;
-volatile uint8_t g_reference = 127;
+// file globals
+static motor_mode_t g_mode = MOTOR_mode_no_ctrl;
+static int16_t g_max_encoder_value;
+static uint8_t g_reference_position = 127;
 
-void MOTOR_start_controller()
+// internal functions
+static void start_controller_timer();
+static int read_encoder_scaled();
+static int16_t read_encoder_raw();
+static void set_speed(uint8_t speed);
+static void set_direction(uint8_t direction);
+
+
+void MOTOR_init( void )
 {
-	// OC3A disconnected. Normal port operation, Normal mode
+	TWI_Master_Initialise();
+	// set MJ1 pins as output
+	// PH4 = EN, PH1 = DIR
+	DDRH |= (1 << PH4) | (1 << PH1);
 	
-	// Set prescaler to 1/64
-	TCCR3B |= (1 << CS31) | (1 << CS30);
+	// enable motor and select direction in MJ1
+	PORTH |= (1 << PH4) | (1 << PH1);
 	
-	// Set the desired output compare match that will generate a timer interrupt
-	// Choose dt = 0.1 -> OCR3A = 12500
-	OCR3A = 0x30D4;
+	// setup encoder: set MJ2 pins as input
+	DDRK = 0x00;
 	
-	// Enable output compare interrupt 3A
-	TIMSK3 |= (1 << OCIE3A);
+	// set some MJ1 pins to output, PH3 = SEL, PH5 = !OE, PH6 = RST
+	DDRH |= (1 << PH3) | (1 << PH5)| (1 << PH6);
+	
+	start_controller_timer();
+	
+	printf("[MOTOR] INFO: initialization done\r\n");
+	
 }
 
-void MOTOR_stop()
+void MOTOR_find_limits()
 {
-	TIMSK3 &= ~(1 << OCIE3A);
+	// drive to end
+	MOTOR_set_direction(MOTOR_right);
+	MOTOR_set_speed(96);
+	_delay_ms(2000);
+	MOTOR_set_speed(0);
+	
+	// reset encoder
+	PORTH &= ~(1 << PH6);
+	_delay_us(20);
+	PORTH |= (1 << PH6);
+	
+	// find max encoder value
+	MOTOR_set_direction(MOTOR_left);
+	MOTOR_set_speed(96);
+	_delay_ms(2000);
+	MOTOR_set_speed(0);
+	g_max_encoder_value = read_encoder_raw();
+	printf("[MOTOR] INFO: max encoder value found: %d\r\n", g_max_encoder_value);
 }
 
-void MOTOR_set_position(uint8_t reference_pos)
+void MOTOR_set_mode(motor_mode_t mode)
 {
-	g_reference = reference_pos;
+	char *old_mode = g_mode == MOTOR_mode_pid ? "MOTOR_mode_pid" : "MOTOR_mode_no_ctrl";
+	char *new_mode = mode == MOTOR_mode_pid ? "MOTOR_mode_pid" : "MOTOR_mode_no_ctrl";	
+	printf("[MOTOR] INFO: mode set (%s -> %s)\r\n", old_mode, new_mode);
+	g_mode = mode;
 }
 
-int CONTROLLER_set_reference(uint8_t reference)
+motor_mode_t MOTOR_get_mode()
+{
+	return g_mode;
+}
+
+void MOTOR_set_position(uint8_t position)
+{
+	if (g_mode != MOTOR_mode_pid)
+	{
+		printf("[MOTOR] WARNING: setting position outside of PID mode\r\n");
+	}
+	g_reference_position = position;
+}
+
+void MOTOR_set_speed(uint8_t speed)
+{
+	if (g_mode == MOTOR_mode_pid)
+	{
+		printf("[MOTOR] WARNING: setting speed directly in PID mode\r\n");
+	}
+	set_speed(speed);
+}
+
+void set_speed(uint8_t speed)
 {	
-	g_reference = reference;
-	int reff;
-	// 255 is rightmost position, 0 is leftmost position
-	reff = abs(reference - 0xFF);
-	return reff;
+	TWI_send_address_and_data(&speed, 1);
+	
+	if(!TWI_Transceiver_Busy() && !TWI_statusReg.lastTransOK)
+	{
+		TWI_act_on_failure_in_last_transmission(TWI_Get_State_Info());
+	}
 }
 
-int CONTROLLER_run(int y, int reference)
+void MOTOR_set_direction(motor_direction_t direction)
 {
+	if (g_mode == MOTOR_mode_pid)
+	{
+		printf("[MOTOR] WARNING: setting direction directly in PID mode\r\n");
+	}
+	set_direction(direction);
+}
+
+
+void set_direction(motor_direction_t direction)
+{
+	switch(direction)
+	{
+		case MOTOR_left:
+			PORTH &= ~(1 << PH1);
+			break;
+		case MOTOR_right:
+			PORTH |= (1 << PH1);
+			break;
+	}
+}
+
+static int16_t read_encoder_raw()
+{
+	// set !OE low
+	PORTH &= ~(1<<PH5);
+	
+	// set SEL low to get high byte(0)
+	PORTH &= ~(1<<PH3);
+	
+	_delay_us(20); // TODO: is this necessary?!
+	// read MSB
+	uint8_t encoder_value_MSB;
+	encoder_value_MSB = PINK;
+	
+	// set SEL high to get low byte(1)
+	PORTH |= (1<<PH3);
+	_delay_us(20);
+	
+	// read LSB
+	uint8_t encoder_value_LSB;
+	encoder_value_LSB = PINK;
+
+	// set !OE high
+	PORTH |= (1<<PH5);
+	
+	// process received data
+	int16_t total_encoder_value = encoder_value_MSB << 8 | encoder_value_LSB;
+	
+	return total_encoder_value;
+}
+
+#define Kp 110
+#define Ki 10
+#define Kd 100
+volatile int run_controller_flag = 0;
+
+void MOTOR_pid_update()
+{
+	if (g_mode != MOTOR_mode_pid)
+	{
+		printf("[MOTOR] WARNING: unneccesary call to MOTOR_pid_update() outside MOTOR_mode_pid\r\n");
+		return;
+	}
+	
 	static int integral;
 	static int u;
 	static int prev_err;
 	int error;
 	int derivative;
 	int dt = 1;		//0.1*10
-	
-	switch(run_controller_flag){
+	uint8_t y = read_encoder_scaled();
+		
+	switch(run_controller_flag)
+	{
 		case 0:
 			break;
 		case 1:
-			error = reference - y;
-			if (abs(error) > 10)
-			{
+			error = g_reference_position - y;
+			if (abs(error) > 10){
 				integral = integral + error*dt;
 			}
 			derivative = (error - prev_err)/dt;
@@ -81,157 +193,36 @@ int CONTROLLER_run(int y, int reference)
 			run_controller_flag = 0;
 			break;
 	}
-	
-	return (int)u/100;
+		
+	MOTOR_set_direction(u < 0);
+	MOTOR_set_speed(u);
 }
 
-void MOTOR_init( void )
-{
-	TWI_Master_Initialise();
-	// Set MJ1 pins as output
-	// PH4 = EN, PH1 = DIR
-	DDRH |= (1 << PH4) | (1 << PH1);
-	
-	// Enable motor and select direction in MJ1
-	PORTH |= (1 << PH4) | (1 << PH1);
-	
-	// Setup encoder: set MJ2 pins as input
-	DDRK = 0x00;
-	
-	// Set some MJ1 pins to output, PH3 = SEL, PH5 = !OE, PH6 = RST
-	DDRH |= (1 << PH3) | (1 << PH5)| (1 << PH6);
-	
-	//MOTOR_find_limits();
-	//CONTROLLER_init_timer();
-
-	
-}
-
-void MOTOR_find_limits( void )
-{
-	// *** Calibrate ***
-	MOTOR_set_dir(MOTOR_right);
-	max_velocity = init_velocity;
-	MOTOR_set_vel(init_velocity);
-	_delay_ms(2000);
-	MOTOR_set_vel(0);
-	
-	// Reset encoder
-	PORTH &= ~(1 << PH6);
-	_delay_us(20);
-	PORTH |= (1 << PH6);
-	
-	// Find max encoder value
-	MOTOR_set_dir(MOTOR_left);
-	MOTOR_set_vel(init_velocity);
-	_delay_ms(2000);
-	MOTOR_set_vel(0);
-	MOTOR_max_encoder_value = MOTOR_read_encoder();
-}
-
-void MOTOR_set_dir(MOTOR_Direction dir)
-{
-	if (dir == MOTOR_right){
-		// Right
-		PORTH |= (1 << PH1);
-	}
-	else if (dir == MOTOR_left){
-		// Left
-		PORTH &= ~(1 << PH1);
-	}
-}
-
-void MOTOR_set_max_velocity(int speed)
-{
-	switch (speed){
-		case 1:
-			max_velocity = 0x60;
-			break;
-		case 2:
-			max_velocity = 0x80;
-			break;
-		default:
-			max_velocity = 0x60;
-		break;
-	}
-}
-
-void MOTOR_set_vel(uint8_t vel)
-{
-	uint8_t velocity[1];
-	if (vel < max_velocity)
-	{ 
-		velocity[0] = vel; 
-	}
-	else
-	{ 
-		velocity[0] = max_velocity; 
-	}
-	TWI_send_address_and_data(velocity, 1);
-	
-	if(!TWI_Transceiver_Busy() && !TWI_statusReg.lastTransOK)
-	{
-		TWI_act_on_failure_in_last_transmission( TWI_Get_State_Info() );
-	}
-}
-
-int16_t MOTOR_read_encoder( void )
-{
-	// Set !OE low
-	PORTH &= ~(1<<PH5);
-	
-	// Set SEL low to get high byte(0)
-	PORTH &= ~(1<<PH3);
-	
-	_delay_us(20); // TODO: is this necessary?!
-	// Read MSB
-	uint8_t encoder_value_MSB;
-	encoder_value_MSB = PINK;
-	
-	// Set SEL high to get low byte(1)
-	PORTH |= (1<<PH3);
-	_delay_us(20);
-	
-	// Read LSB
-	uint8_t encoder_value_LSB;
-	encoder_value_LSB = PINK;
-
-	// Set !OE high
-	PORTH |= (1<<PH5);
-	
-	// Process received data
-	int16_t total_encoder_value = encoder_value_MSB << 8 | encoder_value_LSB;
-	
-	return total_encoder_value;
-}
-
-int MOTOR_read_scaled_encoder( void )
+static int read_encoder_scaled()
 {
 	// Scaled between 0 and 255
-	float encoder_value = (float)MOTOR_read_encoder()/MOTOR_max_encoder_value * 0xFF;
+	float encoder_value = (float)read_encoder_raw()/g_max_encoder_value * 255;
 	return (int)encoder_value;
 }
 
 
+static void start_controller_timer()
+{
+	// OC3A disconnected. Normal port operation, Normal mode
+	
+	// set prescaler to 1/64
+	TCCR3B |= (1 << CS31) | (1 << CS30);
+	
+	// set the desired output compare match that will generate a timer interrupt
+	// choose dt = 0.1 -> OCR3A = 12500
+	OCR3A = 0x30D4;
+	
+	// enable output compare interrupt 3A
+	TIMSK3 |= (1 << OCIE3A);
+}
+
 ISR(TIMER3_COMPA_vect)
 {
-	// reset interrupt
 	TCNT3 = 0;
-
-	// PID
-	static int prev_error, integral, u;
-	int y, error, derivative, dt;	
-
-	y = MOTOR_read_scaled_encoder();
-	error = g_reference - y;
-	if (abs(error) > 10)
-	{
-		integral += error*dt;
-	}
-	derivative = (error - prev_error)/dt;
-	u = Kp*error;// + Ki*integral + Kd*derivative;
-	prev_error = error;
-
-	MOTOR_set_dir(u > 0);
-	MOTOR_set_vel((uint8_t)u);
+	run_controller_flag = 1;
 }

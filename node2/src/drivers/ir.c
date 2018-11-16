@@ -1,12 +1,16 @@
 #include "ir.h"
+#include "common/uart.h"
+
+#include <avr/io.h>
 
 void IR_init()
 {
 	// Enable ADC and set prescaler to 128
 	ADCSRA |= (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+	printf("[IR] INFO: initialization done\r\n");
 }
 
-uint16_t ADC_read()
+static uint16_t read_adc()
 {
 	// Reference selection: AVCC w/ external capacitor at AREF. Left adjust result
 	// Using ADC0 (A0 on shield) as input
@@ -23,9 +27,9 @@ uint16_t ADC_read()
 }
 
 
-uint8_t IR_beam_broken()
+bool IR_beam_broken()
 {
-	return ADC_read() < 2000;
+	return read_adc() < 2000;
 }
 
 

@@ -1,9 +1,9 @@
 #ifndef IR_H_
 #define IR_H_
 
-#include <avr/io.h>
+#include <stdbool.h>
 
 void IR_init();
-uint8_t IR_beam_broken();
+bool IR_beam_broken();
 
 #endif /* IR_H_ */

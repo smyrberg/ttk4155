@@ -4,19 +4,22 @@
 
 #include <avr/io.h>
 
-typedef enum {MOTOR_right, MOTOR_left} MOTOR_Direction;
+typedef enum motor_mode_t {
+	MOTOR_mode_pid = 0,
+	MOTOR_mode_no_ctrl
+} motor_mode_t;
 
-void MOTOR_init( void );
-void MOTOR_find_limits( void );
-void MOTOR_set_dir(MOTOR_Direction dir);
-void MOTOR_set_max_velocity(int speed);
-void MOTOR_set_vel(uint8_t vel);
-int16_t MOTOR_read_encoder( void );
-int MOTOR_read_scaled_encoder( void );
+typedef enum motor_direction_t {
+	MOTOR_right = 0,
+	MOTOR_left
+} motor_direction_t;
 
-void MOTOR_start_controller();
-void MOTOR_stop();
-void MOTOR_set_position(uint8_t reference_pos);
-
+void MOTOR_init();
+void MOTOR_find_limits();
+void MOTOR_set_mode(motor_mode_t mode);
+motor_mode_t MOTOR_get_mode();
+void MOTOR_set_position(uint8_t position);
+void MOTOR_set_speed(uint8_t speed);
+void MOTOR_set_direction(motor_direction_t direction);
 
 #endif /* MOTOR_H_ */

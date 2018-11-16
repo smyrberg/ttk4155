@@ -192,12 +192,6 @@
     <Compile Include="src\drivers\ir.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\drivers\pwm.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\drivers\pwm.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="src\drivers\servo.c">
       <SubType>compile</SubType>
     </Compile>
