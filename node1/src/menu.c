@@ -21,10 +21,17 @@ void MENU_init()
 
 uint8_t MENU_main()
 {
+	menu_t* current_menu = &m_main;
+	menu_t* next_menu;
 	while(1)
 	{
-		cursor_direction_t cursor_dir = get_joystick_direction();
+		print_menu(&m_main);
+		next_menu = get_next_menu_from_user(&current_menu);
 		
+		if (next_menu->function_ptr)
+		{
+			next_menu->function_ptr();
+		}
 		
 	}
 }
