@@ -85,13 +85,13 @@ game_score_t game(bool pid)
 		}
 		CAN_message_send(&send_msg);
 			
+		printf("reading ir\r\n");
 		// read IR messages
 		if (CAN_get_latest_msg(&receive_msg))
 		{
 			score++;
 		}
 		
-		printf("time_ms = %d\r\n", time_ms);
 		_delay_ms(LOOP_TIME);
 	}
 	

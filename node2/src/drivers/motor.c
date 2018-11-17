@@ -96,6 +96,8 @@ void MOTOR_set_speed(uint8_t speed)
 
 void set_speed(uint8_t speed)
 {	
+	speed = (speed > 150) ? 150 : speed;
+	
 	TWI_send_address_and_data(&speed, 1);
 	
 	if(!TWI_Transceiver_Busy() && !TWI_statusReg.lastTransOK)

@@ -42,7 +42,7 @@ int main()
 	SERVO_init();
 	IR_init();
 	MOTOR_init();
-	MOTOR_find_limits();
+	//MOTOR_find_limits();
 	SOLENOID_init();
 	CAN_init(CAN_normal_mode);
 	sei();
@@ -50,15 +50,13 @@ int main()
 	
 	
 	uint8_t current_ir = 0, previous_ir = 0;
-	can_msg_t msg;
+	can_msg_t msg, msg2;
 	while(1)
-	{
-		
+	{						
 		bool got_message = CAN_get_latest_msg(&msg);
+		printf("       \r"); // TODO: remove this before delivery
 		if (got_message)
 		{
-			CAN_print(&msg);
-		
 			switch(CAN_get_msg_type(&msg))
 			{
 				case CAN_msg_set_mode:
@@ -78,11 +76,12 @@ int main()
 					SERVO_set_position(msg.data[2]);
 					if (msg.data[3])
 					{
-						//SOLENOID_shoot();
+						SOLENOID_shoot();
 					}
 					break;
 			}
-		
+			printf("      \r"); // TODO: remove this before delivery
+			continue;
 		}
 		
 		
@@ -97,10 +96,10 @@ int main()
 		uint8_t ir_has_been_broken = (current_ir - previous_ir != 0) && current_ir;
 		if (ir_has_been_broken)
 		{
-			//printf("[NODE2] INFO: IR has been broken\r\n");
+			printf("[NODE2] INFO: IR has been broken\r\n");
 			can_msg_t m = {.id=CAN_msg_ir, .length=1, .data={1}};
 			CAN_message_send(&m);
 		}
-		
+		previous_ir = current_ir;
 	}
 }
