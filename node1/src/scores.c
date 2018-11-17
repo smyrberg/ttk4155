@@ -1,6 +1,68 @@
 #include "scores.h"
+#include "drivers/oled.h"
+#include "drivers/joystick.h"
 #include <avr/interrupt.h>
 
+#define NUM_SCORES 5
+static game_score_t g_highscores[NUM_SCORES];
+
+void SCORES_add(game_score_t score)
+{
+	for (int i = 0; i < NUM_SCORES; i++)
+	{
+		if (score.failures < g_highscores[i].failures || !g_highscores[i].valid)
+		{
+			for (int j = NUM_SCORES-1; j > i; j--)
+			{
+				g_highscores[j] = g_highscores[j-1];
+			}
+			g_highscores[i] = score;
+			return;
+		}
+	}
+}
+
+static void print_score(int pos, game_score_t s)
+{
+	if (s.valid)
+	{
+		OLED_printf("%d. Time: %02d Fail: %02d",pos, s.time_ms, s.failures);
+	}
+	else {
+		OLED_printf("%d. BLANK", pos);
+	}
+}
+
+
+void SCORES_delete()
+{
+	OLED_reset();
+	OLED_printf("deleting highscores...");
+	memset(g_highscores,NUM_SCORES * sizeof(game_score_t));
+	_delay_ms(1000);
+	return;
+}
+
+
+void SCORES_view()
+{
+	OLED_reset();
+	OLED_pos(0, ARROW_WIDTH);
+	OLED_printf("Highscore List");
+	for (int i = 1;i <= NUM_SCORES; i++)
+	{
+		OLED_pos(i, ARROW_WIDTH);
+		print_score(i, highscores[i-1]);
+	}
+		
+	OLED_pos(MENU_ITEMS+2, 0);
+	OLED_print_back_arrow();
+		
+	while(JOY_get_4axis_direction() != menu_left);
+}
+
+
+#if 0
 static void EEPROM_write(unsigned int addr, unsigned char data)
 {
 	// Wait for completion of previous write
@@ -39,3 +101,5 @@ void SCORE_delete()
 		EEPROM_write(i, 0);
 	}
 }
+
+#endif

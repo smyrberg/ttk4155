@@ -3,12 +3,7 @@
 
 #include <stdio.h>
 
-typedef struct {
-	uint8_t		failures;
-	uint16_t	time_ms;
-	uint8_t		valid;
-} game_score_t;
-
+#include "scores.h"
 
 game_score_t GAME_no_ctrl();
 game_score_t GAME_pid();

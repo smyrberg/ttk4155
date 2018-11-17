@@ -11,6 +11,14 @@
 #define RIGHT_BUTTON 2
 
 typedef enum {NEUTRAL, LEFT, RIGHT, UP, DOWN} JOY_direction_t;
+
+typedef enum {
+	menu_up,
+	menu_down,
+	menu_left,
+	menu_right,
+} menu_direction_t;
+
 	
 #include <avr/io.h>
 
@@ -19,6 +27,9 @@ typedef struct JOY_pos {
 	uint8_t x;
 	uint8_t y;
 } JOY_position_t;
+
+
+menu_direction_t JOY_get_4axis_direction();
 
 void JOY_init(void);
 int JOY_right_button();

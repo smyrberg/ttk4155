@@ -6,15 +6,17 @@
 
 #include <stdio.h>
 
+typedef struct {
+	uint8_t		failures;
+	uint16_t	time_ms;
+	uint8_t		valid;
+} game_score_t;
 
-typedef struct SCORE_info_t 
-{
-	uint16_t score;
-	char name[USERNAME_CHAR_COUNT];
-} SCORE_info_t;
 
 
-void SCORE_delete();
+void SCORES_add(game_score_t score);
+void SCORES_delete();
+void SCORES_view();
 
 
 

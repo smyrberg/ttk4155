@@ -1,22 +1,20 @@
 #include "menu.h"
 #include "game.h"
+#include "scores.h"
 #include "common/uart.h"
+#include "driver/joystick.h"
 #include <avr/delay.h>
 
 #define LOOP_DELAY_MS 40
 
 // internal declarations
 static menu_direction_t get_joystick_direction();
-
-typedef enum cursor_direction_t {
-	cursor_up_down,
-	cursor_left_right
-} cursor_direction_t;
-
+static menu_t* get_next_menu_from_user(menu_t *menu);
+static void print_menu(menu_t *menu);
 
 void MENU_init()
 {
-	printf("[MENU] initialization done\r\n");
+	printf("[MENU] INFO: initialization done\r\n");
 }
 
 uint8_t MENU_main()
@@ -25,40 +23,79 @@ uint8_t MENU_main()
 	menu_t* next_menu;
 	while(1)
 	{
-		print_menu(&m_main);
+		print_menu(current_menu);
 		next_menu = get_next_menu_from_user(&current_menu);
 		
 		if (next_menu->function_ptr)
 		{
 			next_menu->function_ptr();
 		}
-		
+		else if (next_menu->game_ptr)
+		{
+			SCORES_add(next_menu->game_ptr());
+		}
+		else 
+		{
+			current_menu = next_menu;
+		}
 	}
 }
 
-
-static menu_direction_t get_joystick_direction()
+static menu_t* get_next_menu_from_user(menu_t *menu)
 {
-	JOY_position_t pos = JOY_get_position();
-	if (pos.y > 240)
+	uint8_t line = 1;
+	
+	while(1)
 	{
-		while(JOY_get_position().y > 240);
-		return menu_up;
+		OLED_pos(line, 0);
+		OLED_print_arrow();
+		
+		switch(JOY_get_4axis_direction())
+		{
+			case menu_up:
+				if (line > 1)
+				{
+					OLED_pos(line, 0);
+					OLED_clear_arrow();
+					line--;
+				}
+				break;
+			case menu_down:
+				if (line <= menu->children)
+				{
+					OLED_pos(line, 0);
+					OLED_clear_arrow();
+					line++;
+				}
+				break;
+			case menu_right:
+				return menu->children[line-1];
+			case menu_left:
+				return menu->parent;
+		}
 	}
-	if (pos.y <  15)
+}
+
+static void print_menu(menu_t *menu)
+{
+	OLED_reset();
+	OLED_pos(0, ARROW_WIDTH);
+	OLED_printf("%s", menu->name);
+	
+	// print children
+	for (int i = 0; i < menu->child_count; i++)
 	{
-		while(JOY_get_position().y < 15);
-		return menu_down;
+		OLED_pos(i+1, ARROW_WIDTH);
+		OLED_printf("%d. %s", i+1, menu->children[i]->name);
 	}
-	if (pos.x > 240)
+	
+	// print parent
+	uint8_t is_root = menu->parent == menu;
+	if (menu->parent != NULL && !is_root)
 	{
-		while(JOY_get_position().x > 240);
-		return menu_right;
-	}
-	if (pos.x < 15 )
-	{
-		while(JOY_get_position().x < 15);
-		return menu_left;
+		OLED_pos(MENU_ITEMS+1, 0);
+		OLED_print_back_arrow();
+		OLED_printf("%s", menu->parent->name);
 	}
 }
 
@@ -119,6 +156,33 @@ void print_menu_items(menu_t *menu)
 
 
 typedef enum {menu_up, menu_down, menu_left, menu_right, menu_nop} menu_direction_t;
+
+
+static menu_direction_t get_joystick_direction()
+{
+	JOY_position_t pos = JOY_get_position();
+	if (pos.y > 240)
+	{
+		while(JOY_get_position().y > 240);
+		return menu_up;
+	}
+	if (pos.y <  15)
+	{
+		while(JOY_get_position().y < 15);
+		return menu_down;
+	}
+	if (pos.x > 240)
+	{
+		while(JOY_get_position().x > 240);
+		return menu_right;
+	}
+	if (pos.x < 15 )
+	{
+		while(JOY_get_position().x < 15);
+		return menu_left;
+	}
+}
+
 
 
 static int get_joystick_input(cursor_direction_t cursor_axis)

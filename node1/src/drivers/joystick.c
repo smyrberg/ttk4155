@@ -68,3 +68,29 @@ JOY_direction_t JOY_get_direction(){
 		}
 	}
 }
+
+
+
+menu_direction_t JOY_get_4axis_direction()
+{
+	JOY_position_t pos = JOY_get_position();
+	if (pos.y > 240)
+	{
+		while(JOY_get_position().y > 240);
+		return menu_up;
+	}
+	if (pos.y <  15)
+	{
+		while(JOY_get_position().y < 15);
+		return menu_down;
+	}
+	if (pos.x > 240)
+	{
+		while(JOY_get_position().x > 240);
+		return menu_right;
+	}
+	if (pos.x < 15 )
+	{
+		while(JOY_get_position().x < 15);
+		return menu_left;
+	}

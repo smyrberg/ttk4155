@@ -1,3 +1,6 @@
+#include "menu_items.h"
+#include "scores.h"
+
 menu_t m_main = 
 {
 	.name="Main Menu",
@@ -78,7 +81,7 @@ menu_t m_highscores_view =
 	.parent=&m_highscores,
 	.children=NULL,
 	.child_count=0,
-	.function_ptr=&view_highscores,
+	.function_ptr=&SCORES_view,
 	.game_ptr=NULL
 };
 
@@ -88,7 +91,7 @@ menu_t m_highscores_delete =
 	.parent=&m_highscores,
 	.children=NULL,
 	.child_count=0,
-	.function_ptr=&delete_highscores,
+	.function_ptr=&SCORES_delete,
 	.game_ptr=NULL
 };
 
