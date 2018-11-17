@@ -1,37 +1,64 @@
-#define F_CPU 16000000
-
 #include <avr/interrupt.h>
 #include <avr/delay.h>
+#include "common/can.h"
 #include "common/uart.h"
 #include "common/spi.h"
-#include "common/can.h"
 #include "drivers/servo.h"
 #include "drivers/ir.h"
 #include "drivers/motor.h"
 #include "drivers/solenoid.h"
 
+
+
+#if 0
 int main()
 {
-	//cli();
+	cli();
 	UART_Init(UBRR);
-	SPI_init();
+	printf("starting\r\n");
+	CAN_init(CAN_normal_mode);
+	sei();
+	
+	
+	printf("entering looop\r\n");
+	can_msg_t msg;
+	while(1)
+	{
+		if(CAN_get_latest_msg(&msg))
+		{
+			CAN_print(&msg);
+		}
+	}
+}
+
+#endif
+
+
+
+int main()
+{
+	cli();
+	UART_Init(UBRR);
 	SERVO_init();
 	IR_init();
 	MOTOR_init();
-	//MOTOR_find_limits();
+	MOTOR_find_limits();
 	SOLENOID_init();
 	CAN_init(CAN_normal_mode);
-	//sei();
+	sei();
+	printf("[NODE2] INFO: all initialization done\r\n");
 	
 	
 	uint8_t current_ir = 0, previous_ir = 0;
 	can_msg_t msg;
 	while(1)
 	{
-		//printf("[NODE2] INFO: in loop\r\n");
+		
 		bool got_message = CAN_get_latest_msg(&msg);
 		if (got_message)
 		{
+			CAN_print(&msg);
+		
 			switch(CAN_get_msg_type(&msg))
 			{
 				case CAN_msg_set_mode:
@@ -51,11 +78,14 @@ int main()
 					SERVO_set_position(msg.data[2]);
 					if (msg.data[3])
 					{
-						SOLENOID_shoot();
+						//SOLENOID_shoot();
 					}
 					break;
 			}
+		
 		}
+		
+		
 		
 		if (MOTOR_get_mode() == MOTOR_mode_pid)
 		{
@@ -71,6 +101,6 @@ int main()
 			can_msg_t m = {.id=CAN_msg_ir, .length=1, .data={1}};
 			CAN_message_send(&m);
 		}
-		_delay_ms(30);
+		
 	}
 }

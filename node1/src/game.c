@@ -32,8 +32,6 @@ static can_msg_t make_pid_cmd_msg(JOY_position_t pos, int btn)
 	return msg;
 }
 
-
-
 static void print_score(int score, int time_ms)
 {
 	OLED_reset();
@@ -69,7 +67,7 @@ game_score_t game(bool pid)
 	int score = 0;
 	
 	can_msg_t receive_msg, send_msg;
-	int time_ms;
+	volatile int time_ms;
 	for(time_ms = 0; time_ms < GAME_TIME; time_ms+=LOOP_TIME)
 	{
 		print_score(score, time_ms);
@@ -93,8 +91,7 @@ game_score_t game(bool pid)
 			score++;
 		}
 		
-			
-			
+		printf("time_ms = %d\r\n", time_ms);
 		_delay_ms(LOOP_TIME);
 	}
 	

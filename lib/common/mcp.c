@@ -1,15 +1,17 @@
 #include "mcp.h"
 #include "uart.h"
+#include "spi.h"
 
 void MCP_init(int in_loopback)
 {
-	// SPI_init();
-	MCP_reset();
 	
+	SPI_init();
+	MCP_reset();
 	// turn mask/filters off (receive any message) and also enable rollover
 	// 0x64 = 0b01100100
 	MCP_modify_bit(MCP_RXB0CTRL, 0x64, 0x64);
 	MCP_modify_bit(MCP_RXB1CTRL, 0x64, 0x64);
+	
 	
 	
 	// set mode for controller

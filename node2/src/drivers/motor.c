@@ -19,7 +19,7 @@ static void set_speed(uint8_t speed);
 static void set_direction(uint8_t direction);
 
 
-void MOTOR_init( void )
+void MOTOR_init()
 {
 	TWI_Master_Initialise();
 	// set MJ1 pins as output
@@ -35,7 +35,7 @@ void MOTOR_init( void )
 	// set some MJ1 pins to output, PH3 = SEL, PH5 = !OE, PH6 = RST
 	DDRH |= (1 << PH3) | (1 << PH5)| (1 << PH6);
 	
-	start_controller_timer();
+	//start_controller_timer();
 	
 	printf("[MOTOR] INFO: initialization done\r\n");
 	
@@ -221,8 +221,10 @@ static void start_controller_timer()
 	TIMSK3 |= (1 << OCIE3A);
 }
 
+
 ISR(TIMER3_COMPA_vect)
 {
 	TCNT3 = 0;
 	run_controller_flag = 1;
 }
+
