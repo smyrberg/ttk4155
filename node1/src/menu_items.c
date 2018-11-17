@@ -1,5 +1,6 @@
 #include "menu_items.h"
 #include "scores.h"
+#include "drivers/oled.h"
 
 menu_t m_main = 
 {

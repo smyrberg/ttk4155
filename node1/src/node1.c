@@ -1,3 +1,4 @@
+#define F_CPU 4915200
 #include "common/spi.h"
 #include "common/can.h"
 #include "common/uart.h"

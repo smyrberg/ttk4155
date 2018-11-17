@@ -94,3 +94,4 @@ menu_direction_t JOY_get_4axis_direction()
 		while(JOY_get_position().x < 15);
 		return menu_left;
 	}
+}

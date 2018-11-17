@@ -4,9 +4,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-typedef enum can_msg_type_t{
-	CAN_msg_set_mode,
-	CAN_msg_command,
+typedef enum can_msg_type_t {
+	CAN_msg_set_mode = 1, // data[0]: 0=pid, 1=no_ctrl
+	CAN_msg_command,  // data[0]: {position,speed}, data[1]: direction, data[2]: servo position, data[3]: shoot cmd
 	CAN_msg_ir
 } can_msg_type_t;
 

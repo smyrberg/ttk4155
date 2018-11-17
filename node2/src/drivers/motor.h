@@ -21,5 +21,6 @@ motor_mode_t MOTOR_get_mode();
 void MOTOR_set_position(uint8_t position);
 void MOTOR_set_speed(uint8_t speed);
 void MOTOR_set_direction(motor_direction_t direction);
+void MOTOR_pid_update();
 
 #endif /* MOTOR_H_ */

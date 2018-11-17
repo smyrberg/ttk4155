@@ -2,6 +2,7 @@
 #include "drivers/oled.h"
 #include "drivers/joystick.h"
 #include <avr/interrupt.h>
+#include <avr/delay.h>
 
 #define NUM_SCORES 5
 static game_score_t g_highscores[NUM_SCORES];
@@ -38,7 +39,7 @@ void SCORES_delete()
 {
 	OLED_reset();
 	OLED_printf("deleting highscores...");
-	memset(g_highscores,NUM_SCORES * sizeof(game_score_t));
+	memset(g_highscores, 0, NUM_SCORES * sizeof(game_score_t));
 	_delay_ms(1000);
 	return;
 }
@@ -52,10 +53,10 @@ void SCORES_view()
 	for (int i = 1;i <= NUM_SCORES; i++)
 	{
 		OLED_pos(i, ARROW_WIDTH);
-		print_score(i, highscores[i-1]);
+		print_score(i, g_highscores[i-1]);
 	}
 		
-	OLED_pos(MENU_ITEMS+2, 0);
+	OLED_pos(7, 0);
 	OLED_print_back_arrow();
 		
 	while(JOY_get_4axis_direction() != menu_left);
