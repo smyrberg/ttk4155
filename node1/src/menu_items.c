@@ -49,7 +49,7 @@ menu_t m_game_pid=
 	.children=NULL,
 	.child_count=0,
 	.function_ptr=NULL,
-	.game_ptr=&GAME_pid
+	.game_ptr=&GAME_pos_control
 };
 
 menu_t m_quit=

@@ -65,8 +65,8 @@ void MOTOR_find_limits()
 
 void MOTOR_set_mode(motor_mode_t mode)
 {
-	char *old_mode = g_mode == MOTOR_mode_pid ? "MOTOR_mode_pid" : "MOTOR_mode_no_ctrl";
-	char *new_mode = mode == MOTOR_mode_pid ? "MOTOR_mode_pid" : "MOTOR_mode_no_ctrl";	
+	char *old_mode = g_mode == MOTOR_mode_ctrl ? "MOTOR_mode_pid" : "MOTOR_mode_no_ctrl";
+	char *new_mode = mode == MOTOR_mode_ctrl ? "MOTOR_mode_pid" : "MOTOR_mode_no_ctrl";	
 	printf("[MOTOR] INFO: mode set (%s -> %s)\r\n", old_mode, new_mode);
 	g_mode = mode;
 }
@@ -78,7 +78,7 @@ motor_mode_t MOTOR_get_mode()
 
 void MOTOR_set_position(uint8_t position)
 {
-	if (g_mode != MOTOR_mode_pid)
+	if (g_mode != MOTOR_mode_ctrl)
 	{
 		printf("[MOTOR] WARNING: setting position outside of PID mode\r\n");
 	}
@@ -87,7 +87,7 @@ void MOTOR_set_position(uint8_t position)
 
 void MOTOR_set_speed(uint8_t speed)
 {
-	if (g_mode == MOTOR_mode_pid)
+	if (g_mode == MOTOR_mode_ctrl)
 	{
 		printf("[MOTOR] WARNING: setting speed directly in PID mode\r\n");
 	}
@@ -108,7 +108,7 @@ void set_speed(uint8_t speed)
 
 void MOTOR_set_direction(motor_direction_t direction)
 {
-	if (g_mode == MOTOR_mode_pid)
+	if (g_mode == MOTOR_mode_ctrl)
 	{
 		printf("[MOTOR] WARNING: setting direction directly in PID mode\r\n");
 	}
@@ -164,9 +164,9 @@ static int16_t read_encoder_raw()
 #define Kd 100
 volatile int run_controller_flag = 0;
 
-void MOTOR_pid_update()
+void MOTOR_controller_update()
 {
-	if (g_mode != MOTOR_mode_pid)
+	if (g_mode != MOTOR_mode_ctrl)
 	{
 		printf("[MOTOR] WARNING: unneccesary call to MOTOR_pid_update() outside MOTOR_mode_pid\r\n");
 		return;

@@ -34,7 +34,7 @@ void UART_Transmit (unsigned char data)
 	UDR0 = data;  
 }
 
-unsigned char UART_Recieve (void)
+unsigned char UART_Recieve()
 {
 	// Wait for data to be received
 	while(!(UCSR0A & (1<<RXC0)));  

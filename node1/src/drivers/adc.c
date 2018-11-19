@@ -1,5 +1,3 @@
-#include "atmega_utils.h"
-
 #include "common/bitmanip.h"
 #include "common/uart.h"
 
@@ -9,6 +7,17 @@
 
 #define ADC_START_ADDR 0x1400
 #define NUM_CHANNELS 7
+
+void enable_ext_mem()
+{
+	set_bit(MCUCR, SRE);
+}
+
+void release_jtag()
+{
+	// release PC7-PC4 for JTAG
+	set_bit(SFIOR, XMM2);
+}
 
 void ADC_init()
 {

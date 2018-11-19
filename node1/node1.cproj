@@ -166,12 +166,6 @@
     <Compile Include="src\drivers\adc.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\drivers\atmega_utils.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\drivers\atmega_utils.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="src\drivers\font_normal.h">
       <SubType>compile</SubType>
     </Compile>
@@ -212,12 +206,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\scores.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\test_mcp2515.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\tx.c">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>

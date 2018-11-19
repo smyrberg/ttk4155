@@ -8,33 +8,6 @@
 #include "drivers/motor.h"
 #include "drivers/solenoid.h"
 
-
-
-#if 0
-int main()
-{
-	cli();
-	UART_Init(UBRR);
-	printf("starting\r\n");
-	CAN_init(CAN_normal_mode);
-	sei();
-	
-	
-	printf("entering looop\r\n");
-	can_msg_t msg;
-	while(1)
-	{
-		if(CAN_get_latest_msg(&msg))
-		{
-			CAN_print(&msg);
-		}
-	}
-}
-
-#endif
-
-
-
 int main()
 {
 	cli();
@@ -54,7 +27,6 @@ int main()
 	while(1)
 	{						
 		bool got_message = CAN_get_latest_msg(&msg);
-		printf("       \r"); // TODO: remove this before delivery
 		if (got_message)
 		{
 			switch(CAN_get_msg_type(&msg))
@@ -63,7 +35,7 @@ int main()
 					MOTOR_set_mode(msg.data[0]);
 					break;
 				case CAN_msg_command:
-					if (MOTOR_get_mode() == MOTOR_mode_pid)
+					if (MOTOR_get_mode() == MOTOR_mode_ctrl)
 					{
 						MOTOR_set_position(msg.data[0]);
 					}
@@ -80,15 +52,14 @@ int main()
 					}
 					break;
 			}
-			printf("      \r"); // TODO: remove this before delivery
 			continue;
 		}
 		
 		
 		
-		if (MOTOR_get_mode() == MOTOR_mode_pid)
+		if (MOTOR_get_mode() == MOTOR_mode_ctrl)
 		{
-			MOTOR_pid_update();
+			MOTOR_controller_update();
 		}
 		
 		
@@ -98,7 +69,7 @@ int main()
 		{
 			printf("[NODE2] INFO: IR has been broken\r\n");
 			can_msg_t m = {.id=CAN_msg_ir, .length=1, .data={1}};
-			CAN_message_send(&m);
+			CAN_send_msg(&m);
 		}
 		previous_ir = current_ir;
 	}

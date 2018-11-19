@@ -61,7 +61,7 @@ void CAN_init(can_mode_t mode){
 	
 }
 
-void CAN_message_send(can_msg_t* msg){
+void CAN_send_msg(can_msg_t* msg){
 	/* Only transmit buffer TXB0 is used */
 	
 	/* Loop until TXREQ is cleared */

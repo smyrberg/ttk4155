@@ -1,17 +1,15 @@
+/*!
+ * @file joystick.h
+ * @brief Driver for reading joystick input and button presses.
+ */
 #ifndef JOYSTICK_H_
 #define JOYSTICK_H_
 
-#define X_POS_CHANNEL 0
-#define Y_POS_CHANNEL 1
-#define SLIDER_LEFT_CHANNEL 2
-#define SLIDER_RIGHT_CHANNEL 3
+#include <avr/io.h>
 
-#define JOY_BUTTON 0
-#define LEFT_BUTTON 1
-#define RIGHT_BUTTON 2
-
-typedef enum {NEUTRAL, LEFT, RIGHT, UP, DOWN} JOY_direction_t;
-
+/*!
+ * @brief Enumeration defining discrete 4-axis directions, for use in a menu context.
+ */
 typedef enum {
 	menu_up,
 	menu_down,
@@ -19,23 +17,39 @@ typedef enum {
 	menu_right,
 } menu_direction_t;
 
-	
-#include <avr/io.h>
-
-
+/*!
+ * @brief Structure holding the xy-position of the joystick.
+ */
 typedef struct JOY_pos {
-	uint8_t x;
-	uint8_t y;
+	uint8_t x;		/*!< Horizontal axis*/
+	uint8_t y;		/*!< Vertical axis*/
 } JOY_position_t;
 
+/*!
+ * Initializes the joystick driver.
+ */
+void JOY_init();
 
+/*!
+ * Return a discrete 4axis direction.
+ * Blocks until the user have given one direction and have returned the joystick to a neutral position.
+ * @return 4axis direction provided by the user.
+ */
 menu_direction_t JOY_get_4axis_direction();
 
-void JOY_init(void);
+/*!
+ * Poll whether the right button is pressed on the IO board.
+ * Non-blocking.
+ * @return 1 if button is pressed, otherwise 0.
+ */
 int JOY_right_button();
 
+/*!
+ * Poll the joystick position.
+ * @return The xy position of the joystick.
+ */
 JOY_position_t JOY_get_position();
-JOY_direction_t JOY_get_direction();
+
 
 
 #endif /* JOYSTICK_H_ */

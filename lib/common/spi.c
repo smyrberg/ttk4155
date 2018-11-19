@@ -17,12 +17,12 @@ void SPI_init()
 {
 	// Set MOSI, SCK and SS output
 	#if defined(__AVR_ATmega162__)
-	printf("init atmega162 spi\r\n");
-	DDRB |= (1 << DDB5)|(1 << DDB7)|(1 << DDB4);
+		printf("init atmega162 spi\r\n");
+		DDRB |= (1 << DDB5)|(1 << DDB7)|(1 << DDB4);
 	#endif
 	#if defined(__AVR_ATmega2560__)
-	printf("init atmega2560 spi\r\n");
-	DDRB |= (1 << DDB2)|(1 << DDB1)|(1 << DDB0) | (1 << DDB7);
+		printf("init atmega2560 spi\r\n");
+		DDRB |= (1 << DDB2)|(1 << DDB1)|(1 << DDB0) | (1 << DDB7);
 	#endif
 	
 	// Enable SPI, Master, set clock rate

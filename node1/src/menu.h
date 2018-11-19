@@ -1,18 +1,22 @@
+/*!
+ * @file menu.h
+ * @brief Menu system on node 1.
+ */
 #ifndef MENU_H_
 #define MENU_H_
 
 #include <stdio.h>
 
-
+/*!
+ * Initializes the menu.
+ */
 void MENU_init();
+
+/*!
+ * Run the main menu.
+ * Does not return.
+ */
 uint8_t MENU_main();
 
-void MENU_print_main();
-void MENU_print_highscore();
-void MENU_clear_highscore();
-void MENU_add_score();
-
-void MENU_cursor_up_on_screen();
-void MENU_cursor_down_on_screen();
 
 #endif /* MENU_H_ */
