@@ -15,11 +15,9 @@ void SOLENOID_init()
 
 void SOLENOID_shoot()
 {
-	cli();
 	//set pin to 0
 	PORTF &= ~(1 << PF1);
 	_delay_ms(100);
 	PORTF |= (1 << PF1);
 	_delay_ms(20);
-	sei();
 }

@@ -29,7 +29,8 @@ static uint16_t read_adc()
 
 bool IR_beam_broken()
 {
-	return read_adc() < 2000;
+	//printf("%d\r\n",read_adc());
+	return read_adc() < 500;
 }
 
 

@@ -9,32 +9,6 @@
 #include "drivers/solenoid.h"
 
 
-
-#if 0
-int main()
-{
-	cli();
-	UART_Init(UBRR);
-	printf("starting\r\n");
-	CAN_init(CAN_normal_mode);
-	sei();
-	
-	
-	printf("entering looop\r\n");
-	can_msg_t msg;
-	while(1)
-	{
-		if(CAN_get_latest_msg(&msg))
-		{
-			CAN_print(&msg);
-		}
-	}
-}
-
-#endif
-
-
-
 int main()
 {
 	cli();

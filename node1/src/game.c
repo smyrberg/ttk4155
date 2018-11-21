@@ -1,10 +1,12 @@
+#define F_CPU 4915200
+
 #include "game.h"
 #include "drivers/oled.h"
 #include "drivers/joystick.h"
 #include "common/can.h"
-#include <avr/delay.h>
+#include <util/delay.h>
 #include <stdbool.h>
-
+#include <stdlib.h>
 
 static can_msg_t make_no_ctrl_cmd_msg(JOY_position_t pos, int btn)
 {
@@ -18,7 +20,24 @@ static can_msg_t make_no_ctrl_cmd_msg(JOY_position_t pos, int btn)
 	msg.data[0] = speed;
 	msg.data[1] = direction;
 	msg.data[2] = pos.y;
-	msg.data[3] = btn;
+	
+	// avoid exccessive shooting
+	static int recharge_level = 0;
+	if (recharge_level > 0)
+	{
+		recharge_level--;
+		msg.data[3] = 0;
+	}
+	else
+	{
+		if(btn)
+		{
+			recharge_level = 5;
+		}
+		msg.data[3] = btn;
+	}
+
+	
 	return msg;
 }
 
@@ -46,7 +65,7 @@ static void print_score(int score, int time_ms)
 }
 
 #define GAME_TIME 20000
-#define LOOP_TIME 20
+#define LOOP_TIME 100
 game_score_t game(bool pid)
 {
 	OLED_reset();
@@ -85,14 +104,15 @@ game_score_t game(bool pid)
 		}
 		CAN_message_send(&send_msg);
 			
-		printf("reading ir\r\n");
+		//printf("reading ir\r\n");
+		_delay_ms(LOOP_TIME/2);
 		// read IR messages
 		if (CAN_get_latest_msg(&receive_msg))
 		{
 			score++;
 		}
 		
-		_delay_ms(LOOP_TIME);
+		_delay_ms(LOOP_TIME/2);
 	}
 	
 	return (game_score_t){.failures=score, .time_ms=time_ms, .valid=1};
